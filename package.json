@@ -12,6 +12,8 @@
     "balance": "npx hardhat balance --account",
     "block-number": "npx hardhat block-number",
     "deploy": "npx hardhat run scripts/deploy.ts",
+    "deploy:network": "hardhat run scripts/deploy.ts --network",
+    "verify:network": "hardhat verify --network",
     "test": "npx hardhat test",
     "coverage": "npx hardhat coverage",
     "account": "npx hardhat accounts",
@@ -33,7 +35,11 @@
     "chai": "^4.3.4",
     "dotenv": "^10.0.0",
     "ethereum-waffle": "^3.4.0",
-    "hardhat": "^2.8.3",
+    "hardhat": "^2.3.3",
+    "hardhat-deploy": "^0.8.11",
+    "hardhat-deploy-ethers": "^0.3.0-beta.6",
+    "hardhat-docgen": "^1.1.1",
+    "hardhat-gas-reporter": "^1.0.4",
     "husky": "^7.0.4",
     "lint-staged": "^12.2.2",
     "prettier": "2.4.1",
@@ -44,5 +50,9 @@
     "typechain": "^5.1.1",
     "typescript": "^4.5.5"
   },
-  "packageManager": "yarn@3.1.1"
+  "packageManager": "yarn@3.1.1",
+  "dependencies": {
+    "@uniswap/lib": "^4.0.1-alpha",
+    "@uniswap/sdk": "^3.0.3"
+  }
 }

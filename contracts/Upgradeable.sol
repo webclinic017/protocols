@@ -8,7 +8,8 @@ contract BaseUpgradeable is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     uint256 private storedValue;
 
     event Received(address, uint256);
-
+ 
+       
     receive() external payable {
         emit Received(msg.sender, msg.value);
     }

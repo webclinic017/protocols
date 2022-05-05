@@ -1,32 +1,40 @@
-/*
-    Copyright 2020 Set Labs Inc.
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity ^0.8.4;
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-
-    SPDX-License-Identifier: Apache License, Version 2.0
-*/
-pragma solidity 0.6.10;
-
-/**
- * @title IPriceOracle
- * @author Set Protocol
- *
- * Interface for interacting with PriceOracle
- */
 interface IPriceOracle {
+  // event PriceUpdate(
+  //   address indexed pair,
+  //   uint priceCumulative,
+  //   uint32 blockTimestamp,
+  //   bool latestIsSlotA
+  // );
 
-    /* ============ Functions ============ */
+  function MIN_T() external pure returns (uint32);
 
-    function getPrice(address _assetOne, address _assetTwo) external view returns (uint256);
-    function masterQuoteAsset() external view returns (address);
+  function getPairDetails(address uniswapV2Pair)
+    external
+    view
+    returns (
+      uint priceCumulativeSlotA,
+      uint priceCumulativeSlotB,
+      uint32 lastUpdateSlotA,
+      uint32 lastUpdateSlotB,
+      bool latestIsSlotA,
+      bool initialized
+    );
+
+  function initialize(address _uniSwapRouter) external;
+
+  function addNewPair(address uniswapV2Pair) external;
+
+  function getResult(address uniswapV2Pair) external returns (uint224 price, uint32 T);
+
+  function updateIndexPrice() external  returns (uint224 price);
+
+  function getTokenPrice(address token_address, address token1_address) external view returns (uint256);
+
+  // function getTwoPairResult(address _assetOne, address _assetTwo) external returns (uint224 price, uint32 T) ;
+
+  function getBlockTimestamp() external view returns (uint32);
 }
