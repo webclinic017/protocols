@@ -1,10 +1,10 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { Base__factory, Base } from "../typechain";
+//import { Base__factory, Base } from "../typechain";
 import { deployContractFromName } from "../utils";
 
-describe("Base", () => {
+/*describe("Base", () => {
   let Base: Base;
   let owner: SignerWithAddress;
   let addr1: SignerWithAddress;
@@ -56,4 +56,4 @@ describe("Base", () => {
     await Base.setStoredValue(1000);
     expect(await Base.getStoredValue()).to.equal(1000);
   });
-});
+});*/

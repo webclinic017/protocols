@@ -43,13 +43,8 @@ const config: HardhatUserConfig = {
       accounts: {
         mnemonic,
       },
-      forking: {
-        // eslint-disable-next-line
-        enabled: true,
-        url: `https://data-seed-prebsc-1-s1.binance.org:8545`,
-      }
-      // chainId: chainIds.hardhat,
-      // allowUnlimitedContractSize: true
+      chainId: chainIds.hardhat,
+      allowUnlimitedContractSize: true
     },
     ganache: {
       chainId: 5777,
@@ -158,4 +153,29 @@ const config: HardhatUserConfig = {
           },
         },
       },
-      {l
+      {
+        version: "0.6.10",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
+      },
+      {
+        version: "0.5.16",
+      },
+      {
+        version: "0.6.12",
+      }
+    ],
+  },
+  mocha: {
+    timeout: 200000,
+  },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY,
+  },
+};
+
+module.exports = config;

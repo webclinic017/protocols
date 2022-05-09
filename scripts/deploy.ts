@@ -29,7 +29,7 @@ async function main() {
       // We get the contract to deploy
   const IndexSwap = await ethers.getContractFactory("IndexSwap");
   const indexSwap = await IndexSwap.deploy(priceOracle.address,"0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
-  "0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3","0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3");
+  "0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3","0x67C9E63b7288b7bf88Ce114C474CE2fB50ebC8F0");
 
   await indexSwap.deployed();
    
