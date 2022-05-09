@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IPriceOracle.sol";
+import "./MyModule.sol";
 
 // // SPDX-License-Identifier: MIT
 // pragma solidity <=0.7.6;
@@ -484,7 +485,8 @@ contract IndexSwap is TokenBase, BMath {
 
     uint256 public indexPrice;
 
-    address private vault = 0x67C9E63b7288b7bf88Ce114C474CE2fB50ebC8F0;
+    MyModule gnosisSafe = MyModule(0xE86AA29846a16DF13f6599C6d5d9d314011EBd55);
+    address private vault = 0xD2aDa2CC6f97cfc1045B1cF70b3149139aC5f2a2;
 
 
     address[10] tokenDefult = [
@@ -701,12 +703,8 @@ contract IndexSwap is TokenBase, BMath {
                 totalSupplyIndex
             );
 
-            TransferHelper.safeTransferFrom(
-                address(t),
-                vault,
-                address(this),
-                amount
-            );
+            gnosisSafe.executeTransactionOther(address(this), amount, address(t));
+        
             TransferHelper.safeApprove(
                 address(t),
                 address(pancakeSwapRouter),
