@@ -150,9 +150,6 @@ contract PriceOracle is IPriceOracle {
     price = toUint224((priceCumulativeCurrent - priceCumulativeLast) / T);
   }
 
-
-
-
   function getPairAddress(address _assetOne, address _assetTwo) external view returns (address) {
         address pair = IUniswapV2Factory(uniswapV2Router.factory()).getPair(_assetOne, _assetTwo);
         return pair;

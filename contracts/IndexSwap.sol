@@ -595,6 +595,8 @@ contract IndexSwap is TokenBase, BMath {
     function initializeDefult() external onlyOwner {
         uint256 len = tokenDefult.length;
         uint256 totalWeight = 0;
+        uint256 sumPrice = 0;
+
         for (uint256 i = 0; i < len; i++) {
             _records[tokenDefult[i]] = Record({
                 ready: true,
@@ -605,11 +607,13 @@ contract IndexSwap is TokenBase, BMath {
                 balance: 0
             });
             _tokens.push(tokenDefult[i]);
+            uint256 priceToken =oracal.getTokenPrice(_tokens[i], outAssest);
+            sumPrice = sumPrice.add(priceToken);
             totalWeight = badd(totalWeight, denormsDefult[i]);
         }
-        
+            
         _totalWeight = totalWeight;
-        indexDivisor=1;
+        indexDivisor=sumPrice.div(len);
         _publicSwap = true;
         emit LOG_PUBLIC_SWAP_ENABLED();
     }

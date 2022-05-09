@@ -22,7 +22,7 @@ async function main() {
  
    await priceOracle.deployed();
 
-   priceOracle.initialize(0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd);
+   priceOracle.initialize("0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd");
 
    console.log("priceOracle deployed to:", priceOracle.address);
 
