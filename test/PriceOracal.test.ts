@@ -19,7 +19,7 @@ describe("Price Oracle", () => {
       priceOracle = await PriceOracle.deploy();
 
       await priceOracle.deployed();
-      await priceOracle.initialize("0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd");
+      await priceOracle.initialize("0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3");
 
       console.log("priceOracle deployed to:", priceOracle.address);
     });
