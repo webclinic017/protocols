@@ -261,6 +261,7 @@ contract PriceOracle is IPriceOracle {
     function getPrice(uint256 amountA, address[] calldata path)
         external
         view
+        override
         returns (uint256 amount)
     {
         require(path.length >= 2, "invalid number of params in path");

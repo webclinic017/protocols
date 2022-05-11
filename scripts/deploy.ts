@@ -3,7 +3,7 @@
 //
 // When running the script with `hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
-import  { run, ethers } from "hardhat";
+import { run, ethers } from "hardhat";
 // let fs = require("fs");
 const ETHERSCAN_TX_URL = "https://testnet.bscscan.io/tx/";
 
@@ -15,28 +15,28 @@ async function main() {
   // manually to make sure everything is compiled
   await run("compile");
 
+  // We get the contract to deploy
+  const PriceOracle = await ethers.getContractFactory("PriceOracle");
+  const priceOracle = await PriceOracle.deploy();
 
-   // We get the contract to deploy
-   const PriceOracle = await ethers.getContractFactory("PriceOracle");
-   const priceOracle = await PriceOracle.deploy();
- 
-   await priceOracle.deployed();
+  await priceOracle.deployed();
 
-   priceOracle.initialize("0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3");
+  priceOracle.initialize("0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3");
 
-   console.log("priceOracle deployed to:", priceOracle.address);
+  console.log("priceOracle deployed to:", priceOracle.address);
 
-      // We get the contract to deploy
+  // We get the contract to deploy
   const IndexSwap = await ethers.getContractFactory("IndexSwap");
-  const indexSwap = await IndexSwap.deploy(priceOracle.address,"0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
-  "0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3","0x67C9E63b7288b7bf88Ce114C474CE2fB50ebC8F0");
+  const indexSwap = await IndexSwap.deploy(
+    priceOracle.address,
+    "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
+    "0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3",
+    "0xa05Ae01a56779a75FDBAa299965E0C1087E11cbc"
+  );
 
   await indexSwap.deployed();
-   
+
   console.log("indexSwap deployed to:", indexSwap.address);
-
-
-
 
   console.log(
     `You did it! View your tx here: ${ETHERSCAN_TX_URL}${priceOracle.deployTransaction.hash}`

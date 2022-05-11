@@ -473,7 +473,6 @@ contract TokenBase is ERC20, ERC20Burnable, Ownable {
 }
 
 contract IndexSwap is TokenBase, BMath {
-   
     //address internal constant pancakeSwapAddress = 0x10ED43C718714eb63d5aA57B78B54704E256024E; //Router for bsc mainnet
 
     IUniswapV2Router02 public pancakeSwapRouter;
@@ -484,8 +483,7 @@ contract IndexSwap is TokenBase, BMath {
 
     uint256 public indexPrice;
 
-    address private vault = 0x67C9E63b7288b7bf88Ce114C474CE2fB50ebC8F0;
-
+    address private vault = 0xa05Ae01a56779a75FDBAa299965E0C1087E11cbc;
 
     address[10] tokenDefult = [
         0x4b1851167f74FF108A994872A160f1D6772d474b, // BTC
@@ -549,13 +547,60 @@ contract IndexSwap is TokenBase, BMath {
 
     address outAssest;
 
-    constructor(address _oracal, address _outAssest, address _pancakeSwapAddress, address _vault) {
+    uint256 public amount1;
+    uint256 public amount2;
+    uint256 public amount3;
+    uint256 public amount4;
+    uint256 public amount5;
+    uint256 public amount6;
+    uint256 public amount7;
+    uint256 public amount8;
+    uint256 public amount9;
+    uint256 public amount10;
+
+    uint256 public t1Supply;
+    uint256 public t1SupplyUSD;
+
+    uint256 public t2Supply;
+    uint256 public t2SupplyUSD;
+
+    uint256 public t3Supply;
+    uint256 public t3SupplyUSD;
+
+    uint256 public t4Supply;
+    uint256 public t4SupplyUSD;
+
+    uint256 public t5Supply;
+    uint256 public t5SupplyUSD;
+
+    uint256 public t6Supply;
+    uint256 public t6SupplyUSD;
+
+    uint256 public t7Supply;
+    uint256 public t7SupplyUSD;
+
+    uint256 public t8Supply;
+    uint256 public t8SupplyUSD;
+
+    uint256 public t9Supply;
+    uint256 public t9SupplyUSD;
+
+    uint256 public t10Supply;
+    uint256 public t10SupplyUSD;
+
+    uint256 public totalVaultValue;
+
+    constructor(
+        address _oracal,
+        address _outAssest,
+        address _pancakeSwapAddress,
+        address _vault
+    ) {
         pancakeSwapRouter = IUniswapV2Router02(_pancakeSwapAddress);
         oracal = IPriceOracle(_oracal);
-        vault= _vault;
+        vault = _vault;
         outAssest = _outAssest; //As now we are tacking busd
     }
-
 
     /** @dev Emitted when public trades are enabled. */
     event LOG_PUBLIC_SWAP_ENABLED();
@@ -588,7 +633,7 @@ contract IndexSwap is TokenBase, BMath {
         }
         _totalWeight = totalWeight;
         _publicSwap = true;
-        indexDivisor=1;
+        indexDivisor = 1;
         emit LOG_PUBLIC_SWAP_ENABLED();
     }
 
@@ -607,17 +652,16 @@ contract IndexSwap is TokenBase, BMath {
                 balance: 0
             });
             _tokens.push(tokenDefult[i]);
-            uint256 priceToken =oracal.getTokenPrice(_tokens[i], outAssest);
+            uint256 priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
             sumPrice = sumPrice.add(priceToken);
             totalWeight = badd(totalWeight, denormsDefult[i]);
         }
-            
+
         _totalWeight = totalWeight;
-        indexDivisor=sumPrice.div(len);
+        indexDivisor = sumPrice.div(len);
         _publicSwap = true;
         emit LOG_PUBLIC_SWAP_ENABLED();
     }
-
 
     function _pushUnderlying(
         address erc20,
@@ -640,28 +684,157 @@ contract IndexSwap is TokenBase, BMath {
         currentRate.denominator = _denominator;
     }
 
-    function mintShareAmount(uint256 amount) internal  returns (uint256 price)  {
+    function mintShareAmount(uint256 amount) internal returns (uint256 price) {
         uint256 len = _tokens.length;
         uint256 sumPrice = 0;
         for (uint256 i = 0; i < len; i++) {
             tokenDefult[i] = _tokens[i];
-            uint256 priceToken =oracal.getTokenPrice(_tokens[i], outAssest);
+            uint256 priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
             sumPrice = sumPrice.add(priceToken);
         }
-        indexPrice = sumPrice.div(
-            indexDivisor
-        );
-       
-       return indexPrice.mul(amount);
+        indexPrice = sumPrice.div(indexDivisor);
+
+        return indexPrice.mul(amount);
     }
 
     function investInFund(uint256 cryptoAmount) public payable {
-        uint256 deadline = block.timestamp + 15; // using 'now' for convenience, for mainnet pass deadline from frontend!
         uint256 amountEth = msg.value;
+
+        if (totalSupply() > 0) {
+            // t1
+            IERC20 t1 = IERC20(_tokens[0]);
+            t1Supply = t1.balanceOf(vault);
+            t1SupplyUSD = pancakeSwapRouter.getAmountsOut(
+                t1Supply,
+                getPathForToken(_tokens[0])
+            )[1];
+
+            // t2
+            IERC20 t2 = IERC20(_tokens[1]);
+            t2Supply = t2.balanceOf(vault);
+            t2SupplyUSD = pancakeSwapRouter.getAmountsOut(
+                t2Supply,
+                getPathForToken(_tokens[1])
+            )[1];
+
+            // t3
+            IERC20 t3 = IERC20(_tokens[2]);
+            t3Supply = t3.balanceOf(vault);
+            t3SupplyUSD = pancakeSwapRouter.getAmountsOut(
+                t3Supply,
+                getPathForToken(_tokens[2])
+            )[1];
+
+            // t4
+            IERC20 t4 = IERC20(_tokens[3]);
+            t4Supply = t4.balanceOf(vault);
+            t4SupplyUSD = pancakeSwapRouter.getAmountsOut(
+                t4Supply,
+                getPathForToken(_tokens[3])
+            )[1];
+
+            // t5
+            IERC20 t5 = IERC20(_tokens[4]);
+            t5Supply = t5.balanceOf(vault);
+            t5SupplyUSD = pancakeSwapRouter.getAmountsOut(
+                t5Supply,
+                getPathForToken(_tokens[4])
+            )[1];
+
+            // t6
+            IERC20 t6 = IERC20(_tokens[5]);
+            t6Supply = t6.balanceOf(vault);
+            t6SupplyUSD = pancakeSwapRouter.getAmountsOut(
+                t6Supply,
+                getPathForToken(_tokens[5])
+            )[1];
+
+            // t7
+            IERC20 t7 = IERC20(_tokens[6]);
+            t7Supply = t7.balanceOf(vault);
+            t7SupplyUSD = pancakeSwapRouter.getAmountsOut(
+                t7Supply,
+                getPathForToken(_tokens[6])
+            )[1];
+
+            // t8
+            IERC20 t8 = IERC20(_tokens[7]);
+            t8Supply = t8.balanceOf(vault);
+            t8SupplyUSD = pancakeSwapRouter.getAmountsOut(
+                t8Supply,
+                getPathForToken(_tokens[7])
+            )[1];
+
+            // t9
+            IERC20 t9 = IERC20(_tokens[8]);
+            t9Supply = t9.balanceOf(vault);
+            t9SupplyUSD = pancakeSwapRouter.getAmountsOut(
+                t9Supply,
+                getPathForToken(_tokens[8])
+            )[1];
+
+            // t10
+            IERC20 t10 = IERC20(_tokens[9]);
+            t10Supply = t10.balanceOf(vault);
+            t10SupplyUSD = pancakeSwapRouter.getAmountsOut(
+                t10Supply,
+                getPathForToken(_tokens[9])
+            )[1];
+
+            totalVaultValue = t1SupplyUSD
+                .add(t2SupplyUSD)
+                .add(t3SupplyUSD)
+                .add(t4SupplyUSD)
+                .add(t5SupplyUSD)
+                .add(t6SupplyUSD)
+                .add(t7SupplyUSD)
+                .add(t8SupplyUSD)
+                .add(t9SupplyUSD)
+                .add(t10SupplyUSD);
+
+            amount1 = t1SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
+            amount2 = t2SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
+            amount3 = t3SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
+            amount4 = t4SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
+            amount5 = t5SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
+            amount6 = t6SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
+            amount7 = t7SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
+            amount8 = t8SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
+            amount9 = t9SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
+            amount10 = t10SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
+        }
+
+        uint256 deadline = block.timestamp + 15; // using 'now' for convenience, for mainnet pass deadline from frontend!
         for (uint256 i = 0; i < _tokens.length; i++) {
             address t = _tokens[i];
             Record memory record = _records[t];
-            uint256 swapAmount = amountEth.mul(record.denorm).div(_totalWeight);
+            uint256 swapAmount;
+            if (totalSupply() == 0) {
+                swapAmount = amountEth.mul(record.denorm).div(_totalWeight);
+            } else if (i == 0) {
+                swapAmount = amount1;
+            } else if (i == 1) {
+                swapAmount = amount2;
+            } else if (i == 2) {
+                swapAmount = amount3;
+            } else if (i == 2) {
+                swapAmount = amount3;
+            } else if (i == 3) {
+                swapAmount = amount4;
+            } else if (i == 4) {
+                swapAmount = amount5;
+            } else if (i == 5) {
+                swapAmount = amount6;
+            } else if (i == 6) {
+                swapAmount = amount7;
+            } else if (i == 7) {
+                swapAmount = amount8;
+            } else if (i == 8) {
+                swapAmount = amount9;
+            } else if (i == 9) {
+                swapAmount = amount10;
+            }
+
             pancakeSwapRouter.swapExactETHForTokens{value: swapAmount}(
                 0,
                 getPathForETH(t),
@@ -670,10 +843,6 @@ contract IndexSwap is TokenBase, BMath {
             );
         }
 
-        // uint256 tokenAmount = cryptoAmount.mul(currentRate.numerator).div(
-        //     currentRate.denominator
-        // );
-        
         uint256 tokenAmount = mintShareAmount(cryptoAmount);
 
         _mint(msg.sender, tokenAmount);
@@ -742,6 +911,18 @@ contract IndexSwap is TokenBase, BMath {
         address[] memory path = new address[](2);
         path[0] = token;
         path[1] = pancakeSwapRouter.WETH();
+
+        return path;
+    }
+
+    function getPathForUSDT(address token)
+        public
+        view
+        returns (address[] memory)
+    {
+        address[] memory path = new address[](2);
+        path[0] = token;
+        path[1] = 0x55d398326f99059fF775485246999027B3197955;
 
         return path;
     }
