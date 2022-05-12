@@ -538,8 +538,6 @@ contract IndexSwap is TokenBase, BMath {
 
     uint256 internal indexDivisor;
 
-    uint256 internal indexTokenPrice;
-
     mapping(address => uint256) admins;
 
     // True if PUBLIC can call SWAP & JOIN functions
@@ -691,16 +689,22 @@ contract IndexSwap is TokenBase, BMath {
     function mintShareAmount(uint256 amount) internal returns (uint256 price) {
         uint256 len = _tokens.length;
         uint256 sumPrice = 0;
+        uint256 indexTokenSupply = totalSupply();
         for (uint256 i = 0; i < len; i++) {
             tokenDefult[i] = _tokens[i];
             uint256 priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
             sumPrice = sumPrice.add(priceToken);
         }
-        // price tokens / indextokenprice = price per index token
-        indexPrice = sumPrice.div(indexTokenPrice);
 
-        // bnb amount to invest / price per index token = # index tokens to mint
-        return amount.div(indexPrice);
+        if (indexTokenSupply == 0) {
+            return amount;
+        } else {
+            // price tokens / index token supply = price per index token
+            indexPrice = sumPrice.div(indexTokenSupply);
+
+            // bnb amount to invest / price per index token = # index tokens to mint
+            return amount.div(indexPrice);
+        }
     }
 
     function investInFund(uint256 cryptoAmount) public payable {
