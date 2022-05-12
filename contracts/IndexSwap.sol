@@ -484,7 +484,7 @@ contract IndexSwap is TokenBase, BMath {
 
     uint256 public indexPrice;
 
-    MyModule gnosisSafe = MyModule(0xE86AA29846a16DF13f6599C6d5d9d314011EBd55);
+    MyModule gnosisSafe = MyModule(0xEf73E58650868f316461936A092818d5dF96102E);
     address private vault = 0xD2aDa2CC6f97cfc1045B1cF70b3149139aC5f2a2;
 
     address[10] tokenDefult = [
