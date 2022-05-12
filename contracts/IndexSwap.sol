@@ -687,14 +687,22 @@ contract IndexSwap is TokenBase, BMath {
     function mintShareAmount(uint256 amount) internal returns (uint256 price) {
         uint256 len = _tokens.length;
         uint256 sumPrice = 0;
+        uint256 indexTokenSupply = totalSupply();
         for (uint256 i = 0; i < len; i++) {
             tokenDefult[i] = _tokens[i];
             uint256 priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
             sumPrice = sumPrice.add(priceToken);
         }
-        indexPrice = sumPrice.div(indexDivisor);
 
-        return indexPrice.mul(amount);
+        if (indexTokenSupply == 0) {
+            return amount;
+        } else {
+            // price tokens / index token supply = price per index token
+            indexPrice = sumPrice.div(indexTokenSupply);
+
+            // bnb amount to invest / price per index token = # index tokens to mint
+            return amount.div(indexPrice);
+        }
     }
 
     function investInFund(uint256 cryptoAmount) public payable {
