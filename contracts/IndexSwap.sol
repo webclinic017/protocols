@@ -487,7 +487,7 @@ contract IndexSwap is TokenBase, BMath {
     MyModule gnosisSafe = MyModule(0xEf73E58650868f316461936A092818d5dF96102E);
     address private vault = 0xD2aDa2CC6f97cfc1045B1cF70b3149139aC5f2a2;
 
-    address[10] tokenDefult = [
+    address[2] tokenDefult = [
         0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c, // BTC
         0x2170Ed0880ac9A755fd29B2688956BD959F933F8 // ETH
         /*0x2859e4544C4bB03966803b044A93563Bd2D0DD4D, // SHIBA
