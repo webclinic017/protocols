@@ -43,8 +43,13 @@ const config: HardhatUserConfig = {
       accounts: {
         mnemonic,
       },
-      chainId: chainIds.hardhat,
-      allowUnlimitedContractSize: true
+      forking: {
+        // eslint-disable-next-line
+        enabled: true,
+        url: `https://data-seed-prebsc-1-s1.binance.org:8545`,
+      },
+      // chainId: chainIds.hardhat,
+      // allowUnlimitedContractSize: true
     },
     ganache: {
       chainId: 5777,
@@ -62,7 +67,6 @@ const config: HardhatUserConfig = {
       url: "https://mainnet.infura.io/v3/" + infuraApiKey + "",
     },
     rinkeby: {
-       
       accounts: {
         initialIndex: 0,
         mnemonic,
@@ -72,7 +76,6 @@ const config: HardhatUserConfig = {
       url: "https://rinkeby.infura.io/v3/" + infuraApiKey + "",
     },
     bscTestnet: {
-       
       accounts: {
         initialIndex: 0,
         mnemonic,
@@ -82,7 +85,6 @@ const config: HardhatUserConfig = {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545",
     },
     bscMainnet: {
-       
       accounts: {
         initialIndex: 0,
         mnemonic,
@@ -92,7 +94,6 @@ const config: HardhatUserConfig = {
       url: "https://bsc-dataseed.binance.org/",
     },
     MaticTestnet: {
-       
       accounts: {
         initialIndex: 0,
         mnemonic,
@@ -104,7 +105,6 @@ const config: HardhatUserConfig = {
       url: "https://speedy-nodes-nyc.moralis.io/b80f5d2ee82f6cefad759c9d/polygon/mumbai",
     },
     MaticMainnet: {
-       
       accounts: {
         initialIndex: 0,
         mnemonic,
@@ -142,7 +142,7 @@ const config: HardhatUserConfig = {
             enabled: true,
             runs: 200,
           },
-        }
+        },
       },
       {
         version: "0.7.6",
@@ -167,7 +167,7 @@ const config: HardhatUserConfig = {
       },
       {
         version: "0.6.12",
-      }
+      },
     ],
   },
   mocha: {
