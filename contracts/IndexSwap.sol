@@ -483,23 +483,23 @@ contract IndexSwap is TokenBase, BMath {
 
     uint256 public indexPrice;
 
-    address private vault = 0xa05Ae01a56779a75FDBAa299965E0C1087E11cbc;
+    address private vault = 0x66d063afaC94e1e9E45838cf1d8954C2A6E10458;
 
-    address[10] tokenDefult = [
-        0x4b1851167f74FF108A994872A160f1D6772d474b, // BTC
+    address[2] tokenDefult = [
         0x8BaBbB98678facC7342735486C851ABD7A0d17Ca, // ETH -- already existed
-        0xBf0646Fa5ABbFf6Af50a9C40D5E621835219d384, // SHIBA
+        0x8a9424745056Eb399FD19a0EC26A14316684e274 // DAI -- already existed
+        /*0xBf0646Fa5ABbFf6Af50a9C40D5E621835219d384, // SHIBA
         0xCc00177908830cE1644AEB4aD507Fda3789128Af, // XRP
-        0x2F9fd65E3BB89b68a8e2Abd68Db25F5C348F68Ee, // LTC*/
-        0x8a9424745056Eb399FD19a0EC26A14316684e274, // DAI -- already existed
+        0x2F9fd65E3BB89b68a8e2Abd68Db25F5C348F68Ee, // LTC
+        0x4b1851167f74FF108A994872A160f1D6772d474b, // BTC
         0x0bBF12a9Ccd7cD0E23dA21eFd3bb16ba807ab069, // LUNA
         0x8D908A42FD847c80Eeb4498dE43469882436c8FF, // LINK
         0x62955C6cA8Cd74F8773927B880966B7e70aD4567, // UNI
-        0xb7a58582Df45DBa8Ad346c6A51fdb796D64e0898 // STETH
+        0xb7a58582Df45DBa8Ad346c6A51fdb796D64e0898 // STETH*/
     ];
 
-    //uint96[2] denormsDefult=[1,1];
-    uint96[10] denormsDefult = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+    uint96[2] denormsDefult = [1, 1];
+    //uint96[10] denormsDefult = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
     //uint totalSum;
 
     struct rate {
@@ -549,14 +549,14 @@ contract IndexSwap is TokenBase, BMath {
 
     uint256 public amount1;
     uint256 public amount2;
-    uint256 public amount3;
+    /*uint256 public amount3;
     uint256 public amount4;
     uint256 public amount5;
     uint256 public amount6;
     uint256 public amount7;
     uint256 public amount8;
     uint256 public amount9;
-    uint256 public amount10;
+    uint256 public amount10;*/
 
     uint256 public t1Supply;
     uint256 public t1SupplyUSD;
@@ -564,7 +564,7 @@ contract IndexSwap is TokenBase, BMath {
     uint256 public t2Supply;
     uint256 public t2SupplyUSD;
 
-    uint256 public t3Supply;
+    /*uint256 public t3Supply;
     uint256 public t3SupplyUSD;
 
     uint256 public t4Supply;
@@ -586,7 +586,7 @@ contract IndexSwap is TokenBase, BMath {
     uint256 public t9SupplyUSD;
 
     uint256 public t10Supply;
-    uint256 public t10SupplyUSD;
+    uint256 public t10SupplyUSD;*/
 
     uint256 public totalVaultValue;
 
@@ -688,32 +688,28 @@ contract IndexSwap is TokenBase, BMath {
         uint256 len = _tokens.length;
         uint256 sumPrice = 0;
         uint256 indexTokenSupply = totalSupply();
+
         for (uint256 i = 0; i < len; i++) {
             IERC20 token = IERC20(_tokens[i]);
             uint256 tokenBalance = token.balanceOf(vault);
             tokenDefult[i] = _tokens[i];
-            uint256 priceToken = oracal.getPrice(
-                tokenBalance,
-                getPathForToken(_tokens[i])
-            );
-            sumPrice = sumPrice.add(priceToken);
+
+            uint256 priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
+            sumPrice = sumPrice.add(priceToken.mul(tokenBalance));
+            require(sumPrice > 0, "sum price is not greater than 0");
         }
 
-        if (indexTokenSupply == 0) {
-            return amount;
-        } else {
-            // price tokens / index token supply = price per index token
-            indexPrice = sumPrice.div(indexTokenSupply);
-
-            // bnb amount to invest / price per index token = # index tokens to mint
-            return amount.div(indexPrice);
-        }
+        return
+            amount.mul(indexTokenSupply).mul(1000000000000000000).div(sumPrice);
     }
 
     function investInFund(uint256 cryptoAmount) public payable {
         uint256 amountEth = msg.value;
+        uint256 tokenAmount = cryptoAmount;
 
-        uint256 tokenAmount = mintShareAmount(cryptoAmount);
+        if (totalSupply() > 0) {
+            tokenAmount = mintShareAmount(cryptoAmount);
+        }
 
         if (totalSupply() > 0) {
             // t1
@@ -732,7 +728,7 @@ contract IndexSwap is TokenBase, BMath {
                 getPathForToken(_tokens[1])
             )[1];
 
-            // t3
+            /*// t3
             IERC20 t3 = IERC20(_tokens[2]);
             t3Supply = t3.balanceOf(vault);
             t3SupplyUSD = pancakeSwapRouter.getAmountsOut(
@@ -794,29 +790,28 @@ contract IndexSwap is TokenBase, BMath {
             t10SupplyUSD = pancakeSwapRouter.getAmountsOut(
                 t10Supply,
                 getPathForToken(_tokens[9])
-            )[1];
+            )[1];*/
 
-            totalVaultValue = t1SupplyUSD
-                .add(t2SupplyUSD)
-                .add(t3SupplyUSD)
+            totalVaultValue = t1SupplyUSD.add(t2SupplyUSD);
+            /*.add(t3SupplyUSD)
                 .add(t4SupplyUSD)
                 .add(t5SupplyUSD)
                 .add(t6SupplyUSD)
                 .add(t7SupplyUSD)
                 .add(t8SupplyUSD)
                 .add(t9SupplyUSD)
-                .add(t10SupplyUSD);
+                .add(t10SupplyUSD)*/
 
             amount1 = t1SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
             amount2 = t2SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
-            amount3 = t3SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
+            /*amount3 = t3SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
             amount4 = t4SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
             amount5 = t5SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
             amount6 = t6SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
             amount7 = t7SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
             amount8 = t8SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
             amount9 = t9SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
-            amount10 = t10SupplyUSD.mul(cryptoAmount).div(totalVaultValue);
+            amount10 = t10SupplyUSD.mul(cryptoAmount).div(totalVaultValue);*/
         }
 
         uint256 deadline = block.timestamp + 15; // using 'now' for convenience, for mainnet pass deadline from frontend!
@@ -828,9 +823,9 @@ contract IndexSwap is TokenBase, BMath {
                 swapAmount = amountEth.mul(record.denorm).div(_totalWeight);
             } else if (i == 0) {
                 swapAmount = amount1;
-            } else if (i == 1) {
+            } else {
                 swapAmount = amount2;
-            } else if (i == 2) {
+            } /*else if (i == 2) {
                 swapAmount = amount3;
             } else if (i == 2) {
                 swapAmount = amount3;
@@ -848,7 +843,7 @@ contract IndexSwap is TokenBase, BMath {
                 swapAmount = amount9;
             } else if (i == 9) {
                 swapAmount = amount10;
-            }
+            }*/
 
             pancakeSwapRouter.swapExactETHForTokens{value: swapAmount}(
                 0,
