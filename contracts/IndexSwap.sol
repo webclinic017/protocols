@@ -691,8 +691,13 @@ contract IndexSwap is TokenBase, BMath {
         uint256 sumPrice = 0;
         uint256 indexTokenSupply = totalSupply();
         for (uint256 i = 0; i < len; i++) {
+            IERC20 token = IERC20(_tokens[i]);
+            uint256 tokenBalance = token.balanceOf(vault);
             tokenDefult[i] = _tokens[i];
-            uint256 priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
+            uint256 priceToken = oracal.getPrice(
+                tokenBalance,
+                getPathForToken(_tokens[i])
+            );
             sumPrice = sumPrice.add(priceToken);
         }
 
@@ -920,18 +925,6 @@ contract IndexSwap is TokenBase, BMath {
         address[] memory path = new address[](2);
         path[0] = token;
         path[1] = pancakeSwapRouter.WETH();
-
-        return path;
-    }
-
-    function getPathForUSDT(address token)
-        public
-        view
-        returns (address[] memory)
-    {
-        address[] memory path = new address[](2);
-        path[0] = token;
-        path[1] = 0xfD5840Cd36d94D7229439859C0112a4185BC0255;
 
         return path;
     }

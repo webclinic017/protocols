@@ -38,6 +38,11 @@ interface IPriceOracle {
         view
         returns (uint256);
 
+    function getPrice(uint256 amountA, address[] calldata path)
+        external
+        view
+        returns (uint256);
+
     // function getTwoPairResult(address _assetOne, address _assetTwo) external returns (uint224 price, uint32 T) ;
 
     function getBlockTimestamp() external view returns (uint32);
