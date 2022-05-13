@@ -713,6 +713,8 @@ contract IndexSwap is TokenBase, BMath {
     function investInFund(uint256 cryptoAmount) public payable {
         uint256 amountEth = msg.value;
 
+        uint256 tokenAmount = mintShareAmount(cryptoAmount);
+
         if (totalSupply() > 0) {
             // t1
             IERC20 t1 = IERC20(_tokens[0]);
@@ -855,8 +857,6 @@ contract IndexSwap is TokenBase, BMath {
                 deadline
             );
         }
-
-        uint256 tokenAmount = mintShareAmount(cryptoAmount);
 
         _mint(msg.sender, tokenAmount);
 
