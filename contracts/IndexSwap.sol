@@ -690,30 +690,28 @@ contract IndexSwap is TokenBase, BMath {
         uint256 len = _tokens.length;
         uint256 sumPrice = 0;
         uint256 indexTokenSupply = totalSupply();
+
         for (uint256 i = 0; i < len; i++) {
             IERC20 token = IERC20(_tokens[i]);
             uint256 tokenBalance = token.balanceOf(vault);
             tokenDefult[i] = _tokens[i];
-            uint256 priceToken = oracal.getPrice(
-                tokenBalance,
-                getPathForToken(_tokens[i])
-            );
-            sumPrice = sumPrice.add(priceToken);
+
+            uint256 priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
+            sumPrice = sumPrice.add(priceToken.mul(tokenBalance));
+            require(sumPrice > 0, "sum price is not greater than 0");
         }
 
-        if (indexTokenSupply == 0) {
-            return amount;
-        } else {
-            // price tokens / index token supply = price per index token
-            indexPrice = sumPrice.div(indexTokenSupply);
-
-            // bnb amount to invest / price per index token = # index tokens to mint
-            return amount.div(indexPrice);
-        }
+        return
+            amount.mul(indexTokenSupply).mul(1000000000000000000).div(sumPrice);
     }
 
     function investInFund(uint256 cryptoAmount) public payable {
         uint256 amountEth = msg.value;
+        uint256 tokenAmount = cryptoAmount;
+
+        if (totalSupply() > 0) {
+            tokenAmount = mintShareAmount(cryptoAmount);
+        }
 
         if (totalSupply() > 0) {
             // t1
@@ -856,8 +854,6 @@ contract IndexSwap is TokenBase, BMath {
                 deadline
             );
         }
-
-        uint256 tokenAmount = mintShareAmount(cryptoAmount);
 
         _mint(msg.sender, tokenAmount);
 
