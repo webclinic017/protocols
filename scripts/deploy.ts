@@ -31,7 +31,7 @@ async function main() {
     priceOracle.address,
     "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd", // wbnb
     "0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3", // pancake
-    "0x66d063afaC94e1e9E45838cf1d8954C2A6E10458" // vault
+    "0x07C0737fdc21adf93200bd625cc70a66B835Cf8b" // vault
   );
 
   await indexSwap.deployed();

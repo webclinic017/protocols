@@ -62,7 +62,9 @@ describe("Top 10 Index", () => {
       value: "1000000000000000000",
     });
     const indexSupplyAfter = await indexSwap.totalSupply();
-    //console.log(indexSupplyAfter);
+
+    const investedAmountAfterSlippage = indexSwap.investedAmountAfterSlippage();
+    console.log("for 1bnb", investedAmountAfterSlippage);
 
     expect(Number(indexSupplyAfter)).to.be.greaterThanOrEqual(
       Number(indexSupplyBefore)
@@ -76,21 +78,10 @@ describe("Top 10 Index", () => {
       value: "2000000000000000000",
     });
     const indexSupplyAfter = await indexSwap.totalSupply();
-    //console.log(indexSupplyAfter);
 
-    expect(Number(indexSupplyAfter)).to.be.greaterThanOrEqual(
-      Number(indexSupplyBefore)
-    );
-  });
-
-  it("Invest 0.1BNB into Top10 fund", async () => {
-    const indexSupplyBefore = await indexSwap.totalSupply();
-    //console.log(indexSupplyBefore);
-    await indexSwap.investInFund("100000000000000000", {
-      value: "100000000000000000",
-    });
-    const indexSupplyAfter = await indexSwap.totalSupply();
-    //console.log(indexSupplyAfter);
+    const investedAmountAfterSlippage =
+      await indexSwap.investedAmountAfterSlippage();
+    console.log("for 2 bnb", investedAmountAfterSlippage);
 
     expect(Number(indexSupplyAfter)).to.be.greaterThanOrEqual(
       Number(indexSupplyBefore)
@@ -102,6 +93,26 @@ describe("Top 10 Index", () => {
     //console.log(indexSupplyBefore);
     await indexSwap.investInFund("200000000000000000", {
       value: "200000000000000000",
+    });
+    const investedAmountAfterSlippage =
+      await indexSwap.investedAmountAfterSlippage();
+    console.log("for 0.2 bnb", investedAmountAfterSlippage);
+
+    const sumPrice = await indexSwap.vaultBalance();
+    console.log("sum for 0.2 bnb", sumPrice);
+
+    const indexSupplyAfter = await indexSwap.totalSupply();
+
+    expect(Number(indexSupplyAfter)).to.be.greaterThanOrEqual(
+      Number(indexSupplyBefore)
+    );
+  });
+
+  it("Invest 0.1BNB into Top10 fund", async () => {
+    const indexSupplyBefore = await indexSwap.totalSupply();
+    //console.log(indexSupplyBefore);
+    await indexSwap.investInFund("100000000000000000", {
+      value: "100000000000000000",
     });
     const indexSupplyAfter = await indexSwap.totalSupply();
     //console.log(indexSupplyAfter);
@@ -145,18 +156,6 @@ describe("Top 10 Index", () => {
     expect(p.length).to.be.equal(path.length).to.be.equal(2);
   });
 
-  it("Get BTC/USDT path", async () => {
-    const usdt = "0x55d398326f99059fF775485246999027B3197955";
-    const btc = "0x4b1851167f74FF108A994872A160f1D6772d474b";
-
-    let p = [btc, usdt];
-    const path = await indexSwap.getPathForUSDT(btc);
-
-    expect(p[0]).to.be.equal(path[0]);
-    expect(p[1]).to.be.equal(path[1]);
-    expect(p.length).to.be.equal(path.length).to.be.equal(2);
-  });
-
   it("Get WBNB/ETH path", async () => {
     const wbnb = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
     const eth = "0x8BaBbB98678facC7342735486C851ABD7A0d17Ca";
@@ -175,18 +174,6 @@ describe("Top 10 Index", () => {
 
     let p = [eth, wbnb];
     const path = await indexSwap.getPathForToken(eth);
-
-    expect(p[0]).to.be.equal(path[0]);
-    expect(p[1]).to.be.equal(path[1]);
-    expect(p.length).to.be.equal(path.length).to.be.equal(2);
-  });
-
-  it("Get ETH/USDT path", async () => {
-    const usdt = "0x55d398326f99059fF775485246999027B3197955";
-    const eth = "0x8BaBbB98678facC7342735486C851ABD7A0d17Ca";
-
-    let p = [eth, usdt];
-    const path = await indexSwap.getPathForUSDT(eth);
 
     expect(p[0]).to.be.equal(path[0]);
     expect(p[1]).to.be.equal(path[1]);

@@ -483,7 +483,7 @@ contract IndexSwap is TokenBase, BMath {
 
     uint256 public indexPrice;
 
-    address private vault = 0x66d063afaC94e1e9E45838cf1d8954C2A6E10458;
+    address private vault = 0x07C0737fdc21adf93200bd625cc70a66B835Cf8b;
 
     address[2] tokenDefult = [
         0x8BaBbB98678facC7342735486C851ABD7A0d17Ca, // ETH -- already existed
@@ -590,6 +590,9 @@ contract IndexSwap is TokenBase, BMath {
 
     uint256 public totalVaultValue;
 
+    uint256 public investedAmountAfterSlippage;
+    uint256 public vaultBalance;
+
     constructor(
         address _oracal,
         address _outAssest,
@@ -684,20 +687,12 @@ contract IndexSwap is TokenBase, BMath {
         currentRate.denominator = _denominator;
     }
 
-    function mintShareAmount(uint256 amount) internal returns (uint256 price) {
-        uint256 len = _tokens.length;
-        uint256 sumPrice = 0;
+    function mintShareAmount(uint256 amount, uint256 sumPrice)
+        internal
+        view
+        returns (uint256 price)
+    {
         uint256 indexTokenSupply = totalSupply();
-
-        for (uint256 i = 0; i < len; i++) {
-            IERC20 token = IERC20(_tokens[i]);
-            uint256 tokenBalance = token.balanceOf(vault);
-            tokenDefult[i] = _tokens[i];
-
-            uint256 priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
-            sumPrice = sumPrice.add(priceToken.mul(tokenBalance));
-            require(sumPrice > 0, "sum price is not greater than 0");
-        }
 
         return
             amount.mul(indexTokenSupply).mul(1000000000000000000).div(sumPrice);
@@ -706,9 +701,24 @@ contract IndexSwap is TokenBase, BMath {
     function investInFund(uint256 cryptoAmount) public payable {
         uint256 amountEth = msg.value;
         uint256 tokenAmount = cryptoAmount;
+        investedAmountAfterSlippage = 0;
+        vaultBalance = 0;
 
+        // calculate vault balance in BNB before swap
         if (totalSupply() > 0) {
-            tokenAmount = mintShareAmount(cryptoAmount);
+            uint256 len = _tokens.length;
+            for (uint256 i = 0; i < len; i++) {
+                IERC20 token = IERC20(_tokens[i]);
+                uint256 tokenBalance = token.balanceOf(vault);
+                tokenDefult[i] = _tokens[i];
+
+                uint256 priceToken = oracal.getTokenPrice(
+                    _tokens[i],
+                    outAssest
+                );
+                vaultBalance = vaultBalance.add(priceToken.mul(tokenBalance));
+                require(vaultBalance > 0, "sum price is not greater than 0");
+            }
         }
 
         if (totalSupply() > 0) {
@@ -845,12 +855,27 @@ contract IndexSwap is TokenBase, BMath {
                 swapAmount = amount10;
             }*/
 
-            pancakeSwapRouter.swapExactETHForTokens{value: swapAmount}(
-                0,
-                getPathForETH(t),
-                vault,
-                deadline
+            uint256[] memory swapResult; // swapResult[1]: swapped token amount
+            swapResult = pancakeSwapRouter.swapExactETHForTokens{
+                value: swapAmount
+            }(0, getPathForETH(t), vault, deadline);
+
+            uint256 swapResultBNB = oracal.getTokenPrice(_tokens[i], outAssest);
+            investedAmountAfterSlippage = investedAmountAfterSlippage.add(
+                swapResultBNB.mul(swapResult[1]).div(1000000000000000000)
             );
+        }
+        require(
+            investedAmountAfterSlippage <= tokenAmount,
+            "amount after slippage can't be greater than before"
+        );
+        if (totalSupply() > 0) {
+            tokenAmount = mintShareAmount(
+                investedAmountAfterSlippage,
+                vaultBalance
+            );
+        } else {
+            tokenAmount = investedAmountAfterSlippage;
         }
 
         _mint(msg.sender, tokenAmount);
