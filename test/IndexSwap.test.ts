@@ -88,34 +88,17 @@ describe("Top 10 Index", () => {
     );
   });
 
-  it("Invest 0.2BNB into Top10 fund", async () => {
+  it("Invest 2BNB into Top10 fund", async () => {
     const indexSupplyBefore = await indexSwap.totalSupply();
     //console.log(indexSupplyBefore);
-    await indexSwap.investInFund("200000000000000000", {
-      value: "200000000000000000",
+    await indexSwap.investInFund("2000000000000000000", {
+      value: "2000000000000000000",
     });
+    const indexSupplyAfter = await indexSwap.totalSupply();
+
     const investedAmountAfterSlippage =
       await indexSwap.investedAmountAfterSlippage();
-    console.log("for 0.2 bnb", investedAmountAfterSlippage);
-
-    const sumPrice = await indexSwap.vaultBalance();
-    console.log("sum for 0.2 bnb", sumPrice);
-
-    const indexSupplyAfter = await indexSwap.totalSupply();
-
-    expect(Number(indexSupplyAfter)).to.be.greaterThanOrEqual(
-      Number(indexSupplyBefore)
-    );
-  });
-
-  it("Invest 0.1BNB into Top10 fund", async () => {
-    const indexSupplyBefore = await indexSwap.totalSupply();
-    //console.log(indexSupplyBefore);
-    await indexSwap.investInFund("100000000000000000", {
-      value: "100000000000000000",
-    });
-    const indexSupplyAfter = await indexSwap.totalSupply();
-    //console.log(indexSupplyAfter);
+    console.log("for 2 bnb", investedAmountAfterSlippage);
 
     expect(Number(indexSupplyAfter)).to.be.greaterThanOrEqual(
       Number(indexSupplyBefore)
