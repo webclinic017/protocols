@@ -71,11 +71,11 @@ describe("Top 10 Index", () => {
     );
   });
 
-  it("Invest 2BNB into Top10 fund", async () => {
+  it("Invest 1BNB into Top10 fund", async () => {
     const indexSupplyBefore = await indexSwap.totalSupply();
     //console.log(indexSupplyBefore);
-    await indexSwap.investInFund("2000000000000000000", {
-      value: "2000000000000000000",
+    await indexSwap.investInFund("1000000000000000000", {
+      value: "1000000000000000000",
     });
     const indexSupplyAfter = await indexSwap.totalSupply();
 
