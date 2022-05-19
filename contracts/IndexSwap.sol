@@ -673,14 +673,13 @@ contract IndexSwap is TokenBase, BMath {
                 IERC20 token = IERC20(_tokens[i]);
                 uint256 tokenBalance = token.balanceOf(vault);
 
-                uint256 tokenBalanceBNB = oracal.getTokenPrice(
+                uint256 priceToken = oracal.getTokenPrice(
                     _tokens[i],
                     outAssest
                 );
+                uint256 tokenBalanceBNB = priceToken.mul(tokenBalance);
                 tokenBalanceInBNB.push(tokenBalanceBNB);
-                vaultBalance = vaultBalance.add(
-                    tokenBalanceBNB.mul(tokenBalance)
-                );
+                vaultBalance = vaultBalance.add(tokenBalanceBNB);
                 require(vaultBalance > 0, "sum price is not greater than 0");
             }
 
