@@ -485,20 +485,15 @@ contract IndexSwap is TokenBase, BMath {
 
     address private vault;
 
-    address[2] tokenDefult = [
-        0x8BaBbB98678facC7342735486C851ABD7A0d17Ca, // ETH -- already existed
-        0x8a9424745056Eb399FD19a0EC26A14316684e274 // DAI -- already existed
-        /*0xBf0646Fa5ABbFf6Af50a9C40D5E621835219d384, // SHIBA
-        0xCc00177908830cE1644AEB4aD507Fda3789128Af, // XRP
-        0x2F9fd65E3BB89b68a8e2Abd68Db25F5C348F68Ee, // LTC
-        0x4b1851167f74FF108A994872A160f1D6772d474b, // BTC
-        0x0bBF12a9Ccd7cD0E23dA21eFd3bb16ba807ab069, // LUNA
-        0x8D908A42FD847c80Eeb4498dE43469882436c8FF, // LINK
-        0x62955C6cA8Cd74F8773927B880966B7e70aD4567, // UNI
-        0xb7a58582Df45DBa8Ad346c6A51fdb796D64e0898 // STETH*/
+    address[5] tokenDefult = [
+        0x6f7C932e7684666C9fd1d44527765433e01fF61d, // MKR
+        0xb33EaAd8d922B1083446DC23f610c2567fB5180f, // UNI
+        0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39, //LINK
+        0xD6DF932A45C0f255f85145f286eA0b292B21C90B, // AAVE
+        0x8505b9d2254A7Ae468c0E9dd10Ccea3A837aef5c // COMP
     ];
 
-    uint96[3] denormsDefult = [1, 1, 1];
+    uint96[5] denormsDefult = [1, 1, 1, 1, 1];
     //uint96[10] denormsDefult = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
     //uint totalSum;
 

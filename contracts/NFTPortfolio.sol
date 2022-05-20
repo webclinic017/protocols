@@ -485,17 +485,10 @@ contract IndexSwap is TokenBase, BMath {
 
     address private vault;
 
-    address[2] tokenDefult = [
-        0x8BaBbB98678facC7342735486C851ABD7A0d17Ca, // ETH -- already existed
-        0x8a9424745056Eb399FD19a0EC26A14316684e274 // DAI -- already existed
-        /*0xBf0646Fa5ABbFf6Af50a9C40D5E621835219d384, // SHIBA
-        0xCc00177908830cE1644AEB4aD507Fda3789128Af, // XRP
-        0x2F9fd65E3BB89b68a8e2Abd68Db25F5C348F68Ee, // LTC
-        0x4b1851167f74FF108A994872A160f1D6772d474b, // BTC
-        0x0bBF12a9Ccd7cD0E23dA21eFd3bb16ba807ab069, // LUNA
-        0x8D908A42FD847c80Eeb4498dE43469882436c8FF, // LINK
-        0x62955C6cA8Cd74F8773927B880966B7e70aD4567, // UNI
-        0xb7a58582Df45DBa8Ad346c6A51fdb796D64e0898 // STETH*/
+    address[3] tokenDefult = [
+        0xBbba073C31bF03b8ACf7c28EF0738DeCF3695683, // SAND
+        0xA1c57f48F0Deb89f569dFbE6E2B7f46D33606fD4, // MANA
+        0x385Eeac5cB85A38A9a07A70c73e0a3271CfB54A7 //GHST
     ];
 
     uint96[3] denormsDefult = [1, 1, 1];
