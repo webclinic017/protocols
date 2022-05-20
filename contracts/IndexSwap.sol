@@ -712,10 +712,10 @@ contract IndexSwap is TokenBase, BMath {
                 uint256 tokenBalance = token.balanceOf(vault);
                 tokenDefult[i] = _tokens[i];
 
-                uint256 priceToken = oracal.getTokenPrice(
+               uint256 priceToken = oracal.getTokenPrice(
                     _tokens[i],
                     outAssest
-                );
+                ); 
                 vaultBalance = vaultBalance.add(priceToken.mul(tokenBalance));
                 require(vaultBalance > 0, "sum price is not greater than 0");
             }
@@ -854,7 +854,7 @@ contract IndexSwap is TokenBase, BMath {
             } else if (i == 9) {
                 swapAmount = amount10;
             }*/
-
+            
             uint256[] memory swapResult; // swapResult[1]: swapped token amount
             swapResult = pancakeSwapRouter.swapExactETHForTokens{
                 value: swapAmount

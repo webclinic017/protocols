@@ -70,7 +70,7 @@ contract PriceOracle is IPriceOracle {
             priceCumulativeCurrent,
             blockTimestamp,
             true
-        );
+          );
     }
 
     function toUint224(uint256 input) internal pure returns (uint224) {

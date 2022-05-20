@@ -6,7 +6,7 @@ import "@nomiclabs/hardhat-ethers";
 import "@typechain/hardhat";
 import "@openzeppelin/hardhat-upgrades";
 import "solidity-coverage";
-
+import "solidity-coverage";
 import "./tasks/accounts";
 import "./tasks/balance";
 import "./tasks/block-number";
@@ -102,7 +102,7 @@ const config: HardhatUserConfig = {
       // chainId: chainIds["MaticTestnet"],
       chainId: 80001,
       allowUnlimitedContractSize: true,
-      url: "https://speedy-nodes-nyc.moralis.io/b80f5d2ee82f6cefad759c9d/polygon/mumbai",
+      url: "https://speedy-nodes-nyc.moralis.io/"+ infuraApiKey +"/polygon/mumbai",
     },
     MaticMainnet: {
       accounts: {
