@@ -21,7 +21,7 @@ async function main() {
 
   await priceOracle.deployed();
 
-  priceOracle.initialize("0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3");
+  priceOracle.initialize("0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff");
 
   console.log("priceOracle deployed to:", priceOracle.address);
 
@@ -29,9 +29,9 @@ async function main() {
   const IndexSwap = await ethers.getContractFactory("IndexSwap");
   const indexSwap = await IndexSwap.deploy(
     priceOracle.address,
-    "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd", // wbnb
-    "0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3", // pancake
-    "0x07C0737fdc21adf93200bd625cc70a66B835Cf8b" // vault
+    "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270", // manic
+    "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff", // pancake
+    "0x6056773C28c258425Cf9BC8Ba5f86B8031863164" // vault
   );
 
   await indexSwap.deployed();
