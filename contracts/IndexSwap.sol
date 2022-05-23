@@ -547,11 +547,6 @@ contract IndexSwap is TokenBase, BMath {
 
     address outAssest;
 
-    uint256 public investedAmountAfterSlippage;
-    uint256 public vaultBalance;
-    uint256[] amount;
-    uint256[] tokenBalanceInBNB;
-
     constructor(
         address _oracal,
         address _outAssest,
@@ -646,7 +641,7 @@ contract IndexSwap is TokenBase, BMath {
         currentRate.denominator = _denominator;
     }
 
-    function mintShareAmount(uint256 amount, uint256 sumPrice)
+    function mintShareAmount(uint256 _amount, uint256 sumPrice)
         internal
         view
         returns (uint256 price)
@@ -654,21 +649,25 @@ contract IndexSwap is TokenBase, BMath {
         uint256 indexTokenSupply = totalSupply();
 
         return
-            amount.mul(indexTokenSupply).mul(1000000000000000000).div(sumPrice);
+            _amount.mul(indexTokenSupply).mul(1000000000000000000).div(
+                sumPrice
+            );
     }
 
-    function investInFund(uint256 cryptoAmount) public payable {
-        uint256 amountEth = msg.value;
-        uint256 tokenAmount = cryptoAmount;
-        investedAmountAfterSlippage = 0;
-        vaultBalance = 0;
+    function getTokenAndVaultBalance()
+        public
+        view
+        returns (uint256[] memory tokenXBalance, uint256 vaultValue)
+    {
+        uint256 len = _tokens.length;
+        uint256[] memory tokenBalanceInBNB = new uint256[](len);
+        uint256 vaultBalance = 0;
 
         if (totalSupply() > 0) {
             /* 
                 calculate the balance of all tokens in the vault (in BNB)
                 has to be calculated before the swap because after the balance will change 
             */
-            uint256 len = _tokens.length;
             for (uint256 i = 0; i < len; i++) {
                 IERC20 token = IERC20(_tokens[i]);
                 uint256 tokenBalance = token.balanceOf(vault);
@@ -678,36 +677,53 @@ contract IndexSwap is TokenBase, BMath {
                     outAssest
                 );
                 uint256 tokenBalanceBNB = priceToken.mul(tokenBalance);
-                tokenBalanceInBNB.push(tokenBalanceBNB);
+                tokenBalanceInBNB[i] = tokenBalanceBNB;
                 vaultBalance = vaultBalance.add(tokenBalanceBNB);
                 require(vaultBalance > 0, "sum price is not greater than 0");
             }
+            return (tokenBalanceInBNB, vaultBalance);
+        } else {
+            return (new uint256[](0), 0);
+        }
+    }
 
-            /* 
-                calculate the swap amount for each token
-                ensures that the ratio (weight in the portfolio) stays constant
-            */
+    function investInFund() public payable {
+        uint256 tokenAmount = msg.value;
+        uint256 investedAmountAfterSlippage = 0;
+        uint256 vaultBalance = 0;
+        uint256 len = _tokens.length;
+        uint256[] memory amount = new uint256[](len);
+        uint256[] memory tokenBalanceInBNB = new uint256[](len);
+
+        (tokenBalanceInBNB, vaultBalance) = getTokenAndVaultBalance();
+
+        /* 
+            calculate the swap amount for each token
+            ensures that the ratio (weight in the portfolio) stays constant
+        */
+        if (totalSupply() > 0) {
             for (uint256 i = 0; i < _tokens.length; i++) {
-                amount.push(
-                    tokenBalanceInBNB[i].mul(cryptoAmount).div(vaultBalance)
+                amount[i] = tokenBalanceInBNB[i].mul(tokenAmount).div(
+                    vaultBalance
                 );
             }
         }
 
+        /*
+            swap tokens from BNB to tokens in portfolio
+            swapResult[1]: swapped token amount
+        */
         uint256 deadline = block.timestamp + 15; // using 'now' for convenience, for mainnet pass deadline from frontend!
         for (uint256 i = 0; i < _tokens.length; i++) {
             address t = _tokens[i];
             Record memory record = _records[t];
             uint256 swapAmount;
             if (totalSupply() == 0) {
-                swapAmount = amountEth.mul(record.denorm).div(_totalWeight);
+                swapAmount = tokenAmount.mul(record.denorm).div(_totalWeight);
             } else {
                 swapAmount = amount[i];
             }
-            /*
-                swap tokens from BNB to tokens in portfolio
-                swapResult[1]: swapped token amount
-            */
+
             uint256[] memory swapResult;
             swapResult = pancakeSwapRouter.swapExactETHForTokens{
                 value: swapAmount
@@ -746,11 +762,10 @@ contract IndexSwap is TokenBase, BMath {
         require(success, "refund failed");
     }
 
-    function withdrawFromFundNew(uint256 tokenAmount) public payable {
+    function withdrawFromFundNew(uint256 tokenAmount) public {
         require(tokenAmount <= balanceOf(msg.sender), "not balance");
 
         uint256 deadline = block.timestamp + 15;
-
         uint256 totalSupplyIndex = totalSupply();
 
         _burn(msg.sender, tokenAmount);
@@ -782,6 +797,84 @@ contract IndexSwap is TokenBase, BMath {
                 msg.sender,
                 deadline
             );
+        }
+    }
+
+    function rebalance(uint256[] memory newWeights) public {
+        uint256 sumWeightsToSwap = 0;
+        uint256 totalBNBAmount = 0;
+        uint256 vaultBalance = 0;
+        uint256 len = _tokens.length;
+
+        uint256[] memory oldWeights = new uint256[](len);
+        uint256[] memory tokenBalanceInBNB = new uint256[](len);
+
+        // get current rates xx.xx% (*10000)
+        (tokenBalanceInBNB, vaultBalance) = getTokenAndVaultBalance();
+
+        if (totalSupply() > 0) {
+            for (uint256 i = 0; i < _tokens.length; i++) {
+                oldWeights[i] = tokenBalanceInBNB[i].mul(10000).div(
+                    vaultBalance
+                );
+            }
+
+            // sell - swap to BNB
+            uint256 deadline = block.timestamp + 15;
+            for (uint256 i = 0; i < _tokens.length; i++) {
+                if (newWeights[i] < oldWeights[i]) {
+                    IERC20 token = IERC20(_tokens[i]);
+                    uint256 tokenBalance = token.balanceOf(vault);
+                    uint256 weightDiff = oldWeights[i].sub(newWeights[i]);
+                    uint256 _swapAmount = tokenBalance.mul(weightDiff).div(
+                        oldWeights[i]
+                    );
+                    TransferHelper.safeTransferFrom(
+                        _tokens[i],
+                        vault,
+                        address(this),
+                        _swapAmount
+                    );
+                    TransferHelper.safeApprove(
+                        _tokens[i],
+                        address(pancakeSwapRouter),
+                        _swapAmount
+                    );
+                    uint256[] memory swapResult;
+                    swapResult = pancakeSwapRouter.swapExactTokensForETH(
+                        _swapAmount,
+                        0,
+                        getPathForToken(_tokens[i]),
+                        address(this),
+                        deadline
+                    );
+
+                    totalBNBAmount.add(swapResult[1]);
+                } else if (newWeights[i] > oldWeights[i]) {
+                    uint256 diff = newWeights[i].sub(oldWeights[i]);
+                    sumWeightsToSwap = sumWeightsToSwap.add(diff);
+                }
+            }
+
+            // buy - swap from BNB to token
+            totalBNBAmount = address(this).balance;
+            for (uint256 i = 0; i < len; i++) {
+                address t = _tokens[i];
+                if (newWeights[i] > oldWeights[i]) {
+                    uint256 weightToSwap = newWeights[i].sub(oldWeights[i]);
+                    require(weightToSwap > 0, "weight not greater than 0");
+                    require(sumWeightsToSwap > 0, "div by 0, sumweight");
+                    uint256 swapAmount = totalBNBAmount.mul(weightToSwap).div(
+                        sumWeightsToSwap
+                    );
+                    pancakeSwapRouter.swapExactETHForTokens{value: swapAmount}(
+                        0,
+                        getPathForETH(t),
+                        vault,
+                        deadline
+                    );
+                }
+            }
         }
     }
 
