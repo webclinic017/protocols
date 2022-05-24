@@ -483,7 +483,7 @@ contract IndexSwap is TokenBase, BMath {
 
     uint256 public indexPrice;
 
-    address private vault = 0x07C0737fdc21adf93200bd625cc70a66B835Cf8b;
+    address private vault;
 
     address[2] tokenDefult = [
         0x8BaBbB98678facC7342735486C851ABD7A0d17Ca, // ETH -- already existed
@@ -557,6 +557,22 @@ contract IndexSwap is TokenBase, BMath {
         oracal = IPriceOracle(_oracal);
         vault = _vault;
         outAssest = _outAssest; //As now we are tacking busd
+        assetManagers[msg.sender] = true;
+    }
+
+    mapping(address => bool) public assetManagers;
+
+    modifier onlyAssetManager() {
+        require(assetManagers[msg.sender]);
+        _;
+    }
+
+    function addAssetManager(address assetManager) public onlyAssetManager {
+        require(
+            assetManager != address(0),
+            "Ownable: new manager is the zero address"
+        );
+        assetManagers[assetManager] = true;
     }
 
     /** @dev Emitted when public trades are enabled. */
@@ -568,7 +584,6 @@ contract IndexSwap is TokenBase, BMath {
      * @param tokens Underlying tokens to initialize the pool with
      * @param denorms Initial denormalized weights for the tokens
      */
-
     function initialize(address[] calldata tokens, uint96[] calldata denorms)
         external
         onlyOwner
@@ -800,7 +815,7 @@ contract IndexSwap is TokenBase, BMath {
         }
     }
 
-    function rebalance(uint256[] memory newWeights) public {
+    function rebalance(uint256[] memory newWeights) public onlyAssetManager {
         uint256 sumWeightsToSwap = 0;
         uint256 totalBNBAmount = 0;
         uint256 vaultBalance = 0;
