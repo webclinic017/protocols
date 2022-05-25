@@ -4,7 +4,7 @@
 // When running the script with `hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 import { run, ethers } from "hardhat";
-import { BSCTestNet } from "./networkVariables";
+import { chainIdToAddresses } from "./networkVariables";
 // let fs = require("fs");
 const ETHERSCAN_TX_URL = "https://testnet.bscscan.io/tx/";
 
@@ -16,13 +16,17 @@ async function main() {
   // manually to make sure everything is compiled
   await run("compile");
 
+  // get current chainId
+  const chainId = ethers.provider.network.chainId;
+  const addresses = chainIdToAddresses[chainId];
+
   // We get the contract to deploy
   const PriceOracle = await ethers.getContractFactory("PriceOracle");
   const priceOracle = await PriceOracle.deploy();
 
   await priceOracle.deployed();
 
-  priceOracle.initialize("0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3");
+  priceOracle.initialize(addresses.PancakeSwapRouterAddress);
 
   console.log("priceOracle deployed to:", priceOracle.address);
 
@@ -30,14 +34,20 @@ async function main() {
   const IndexSwap = await ethers.getContractFactory("IndexSwap");
   const indexSwap = await IndexSwap.deploy(
     priceOracle.address,
-    "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd", // wbnb
-    "0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3", // pancake
-    "0x07C0737fdc21adf93200bd625cc70a66B835Cf8b" // vault
+    addresses.WETH_Address,
+    addresses.PancakeSwapRouterAddress,
+    addresses.Vault
   );
 
   await indexSwap.deployed();
 
   console.log("indexSwap deployed to:", indexSwap.address);
+
+  //initialize index based on network
+  await indexSwap.initialize([
+    addresses.ETH_Address,
+    addresses.BTC_Address,
+  ],[1,1]);
 
   console.log(
     `You did it! View your tx here: ${ETHERSCAN_TX_URL}${priceOracle.deployTransaction.hash}`
