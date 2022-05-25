@@ -474,11 +474,7 @@ contract TokenBase is ERC20, ERC20Burnable, Ownable {
 }
 
 contract IndexSwap is TokenBase, BMath {
-    //address internal constant pancakeSwapAddress = 0x10ED43C718714eb63d5aA57B78B54704E256024E; //Router for bsc mainnet
-
     IUniswapV2Router02 public pancakeSwapRouter;
-
-    // IERC20 public token;
 
     using SafeMath for uint256;
 
@@ -494,7 +490,6 @@ contract IndexSwap is TokenBase, BMath {
 
     uint96[2] denormsDefult = [1, 1];
     //uint96[10] denormsDefult = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
-    //uint totalSum;
 
     struct rate {
         uint256 numerator;
@@ -673,10 +668,7 @@ contract IndexSwap is TokenBase, BMath {
         uint256 vaultBalance = 0;
 
         if (totalSupply() > 0) {
-            /* 
-                calculate the balance of all tokens in the vault (in BNB)
-                has to be calculated before the swap because after the balance will change 
-            */
+            // calculate the balance of all tokens in the vault (in BNB)
             for (uint256 i = 0; i < len; i++) {
                 IERC20 token = IERC20(_tokens[i]);
                 uint256 tokenBalance = token.balanceOf(vault);
@@ -704,12 +696,10 @@ contract IndexSwap is TokenBase, BMath {
         uint256[] memory amount = new uint256[](len);
         uint256[] memory tokenBalanceInBNB = new uint256[](len);
 
+        // has to be calculated before the swap because after the balance will change
         (tokenBalanceInBNB, vaultBalance) = getTokenAndVaultBalance();
 
-        /* 
-            calculate the swap amount for each token
-            ensures that the ratio (weight in the portfolio) stays constant
-        */
+        // calculate the swap amount for each token to ensure the ratio (weight in the portfolio) stays constant
         if (totalSupply() > 0) {
             for (uint256 i = 0; i < _tokens.length; i++) {
                 amount[i] = tokenBalanceInBNB[i].mul(tokenAmount).div(
@@ -718,10 +708,7 @@ contract IndexSwap is TokenBase, BMath {
             }
         }
 
-        /*
-            swap tokens from BNB to tokens in portfolio
-            swapResult[1]: swapped token amount
-        */
+        // swap tokens from BNB to tokens in portfolio swapResult[1]: swapped token amount
         uint256 deadline = block.timestamp + 15; // using 'now' for convenience, for mainnet pass deadline from frontend!
         for (uint256 i = 0; i < _tokens.length; i++) {
             address t = _tokens[i];
@@ -738,10 +725,7 @@ contract IndexSwap is TokenBase, BMath {
                 value: swapAmount
             }(0, getPathForETH(t), vault, deadline);
 
-            /*
-                take the amount actually being swapped and convert it to BNB
-                for calculation of the index token amount to mint
-            */
+            // take the amount actually being swapped and convert it to BNB for calculation of the index token amount to mint
             uint256 swapResultBNB = oracal.getTokenPrice(_tokens[i], outAssest);
             investedAmountAfterSlippage = investedAmountAfterSlippage.add(
                 swapResultBNB.mul(swapResult[1]).div(1000000000000000000)
@@ -751,10 +735,7 @@ contract IndexSwap is TokenBase, BMath {
             investedAmountAfterSlippage <= tokenAmount,
             "amount after slippage can't be greater than before"
         );
-        /*
-            calculates the index token amount to mint invested amount after slippage is considered
-            to make sure the index token amount represents the invested amount after slippage
-        */
+        // calculates the index token amount to mint invested amount after slippage is considered to make sure the index token amount represents the invested amount after slippage
         if (totalSupply() > 0) {
             tokenAmount = mintShareAmount(
                 investedAmountAfterSlippage,
