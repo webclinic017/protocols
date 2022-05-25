@@ -72,7 +72,13 @@ contract IndexSwap is TokenBase, BMath {
     IPriceOracle oracal;
 
     address outAssest;
-
+    uint256 public investedAmountAfterSlippage;
+    uint256 public vaultBalance;
+    uint256[] amount;
+    uint256[] tokenBalanceInBNB;
+    uint256 public totalBNBAmount;
+    uint256 public sumWeightsToSwap;
+    uint256 public swapAmount;
     constructor(
         address _oracal,
         address _outAssest,
@@ -130,7 +136,7 @@ contract IndexSwap is TokenBase, BMath {
             _tokens.push(tokens[i]);
             uint256 priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
             sumPrice = sumPrice.add(priceToken);
-            totalWeight = badd(totalWeight, denormsDefult[i]);
+            totalWeight = badd(totalWeight, denorms[i]);
         }
         _totalWeight = totalWeight;
         indexDivisor = sumPrice.div(len);

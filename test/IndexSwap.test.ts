@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { IndexSwap, PriceOracle,IERC20 ,IERC20__factory } from "../typechain";
+import { IndexSwap, PriceOracle,IERC20__factory } from "../typechain";
 import { BigNumber } from "ethers";
 import { chainIdToAddresses } from "../scripts/networkVariables";
 
@@ -67,7 +67,7 @@ describe.only("Tests for IndexSwap", () => {
   
     describe("IndexSwap Contract", function () {  
       it("Initialize IndexFund Tokens", async () => {
-        await indexSwap.initialize([
+        await indexSwap.connect(owner).initialize([
           wbnbInstance.address,
           btcInstance.address,
         ],[1,1]);
@@ -87,9 +87,8 @@ describe.only("Tests for IndexSwap", () => {
         const indexSupplyBefore = await indexSwap.totalSupply();
         const AMOUNT = ethers.BigNumber.from("1000000000000000000"); //1BNB
         //console.log(indexSupplyBefore);
-        await indexSwap.investInFund(AMOUNT, {
-          value: AMOUNT,
-        });
+        const options = { "value": AMOUNT };
+        await indexSwap.investInFund(options);
         const indexSupplyAfter = await indexSwap.totalSupply();
 
         const investedAmountAfterSlippage =
@@ -104,7 +103,7 @@ describe.only("Tests for IndexSwap", () => {
       it("Invest 2BNB into Top10 fund", async () => {
         const indexSupplyBefore = await indexSwap.totalSupply();
         //console.log(indexSupplyBefore);
-        await indexSwap.investInFund("2000000000000000000", {
+        await indexSwap.investInFund( {
           value: "2000000000000000000",
         });
         const indexSupplyAfter = await indexSwap.totalSupply();
@@ -121,7 +120,7 @@ describe.only("Tests for IndexSwap", () => {
       it("Invest 0.2BNB into Top10 fund", async () => {
         const indexSupplyBefore = await indexSwap.totalSupply();
         //console.log(indexSupplyBefore);
-        await indexSwap.investInFund("200000000000000000", {
+        await indexSwap.investInFund({
           value: "200000000000000000",
         });
         const investedAmountAfterSlippage =
@@ -141,7 +140,7 @@ describe.only("Tests for IndexSwap", () => {
       it("Invest 0.1BNB into Top10 fund", async () => {
         const indexSupplyBefore = await indexSwap.totalSupply();
         //console.log(indexSupplyBefore);
-        await indexSwap.investInFund("100000000000000000", {
+        await indexSwap.investInFund({
           value: "100000000000000000",
         });
         const indexSupplyAfter = await indexSwap.totalSupply();
@@ -162,12 +161,12 @@ describe.only("Tests for IndexSwap", () => {
         expect(currentRate.denominator).to.be.equal(denominator);
       });
 
-      it("Invest 1BNB into Top10 fund", async () => {
+      it("Invest 1BNB into Top10 fund after update rate", async () => {
         const indexSupplyBefore = await indexSwap.totalSupply();
         //console.log(indexSupplyBefore);
         const AMOUNT = ethers.BigNumber.from("1000000000000000000"); //1BNB
 
-        await indexSwap.investInFund(AMOUNT, {
+        await indexSwap.investInFund({
           value: AMOUNT,
         });
         const indexSupplyAfter = await indexSwap.totalSupply();
@@ -181,10 +180,10 @@ describe.only("Tests for IndexSwap", () => {
         );
       });
 
-      it("Invest 2BNB into Top10 fund", async () => {
+      it("Invest 2BNB into Top10 fund  update rate", async () => {
         const indexSupplyBefore = await indexSwap.totalSupply();
         //console.log(indexSupplyBefore);
-        await indexSwap.investInFund("2000000000000000000", {
+        await indexSwap.investInFund({
           value: "2000000000000000000",
         });
         const indexSupplyAfter = await indexSwap.totalSupply();
@@ -196,16 +195,6 @@ describe.only("Tests for IndexSwap", () => {
         expect(Number(indexSupplyAfter)).to.be.greaterThanOrEqual(
           Number(indexSupplyBefore)
         );
-      });
-
-      it("Update rate to 2,2", async () => {
-        const numerator = 2;
-        const denominator = 2;
-        await indexSwap.updateRate(numerator, denominator);
-        const currentRate = await indexSwap.currentRate();
-
-        expect(currentRate.numerator).to.be.equal(numerator);
-        expect(currentRate.denominator).to.be.equal(denominator);
       });
 
       it("Get WBNB/BTC path", async () => {
