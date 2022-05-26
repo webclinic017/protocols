@@ -470,7 +470,7 @@ contract BMath is BConst, BNum {
 // }
 
 contract TokenBase is ERC20, ERC20Burnable, Ownable {
-    constructor() ERC20("INDEXLY", "IDX") {}
+    constructor() ERC20("Index Token", "IDX") {}
 }
 
 contract IndexSwap is TokenBase, BMath {
@@ -480,16 +480,46 @@ contract IndexSwap is TokenBase, BMath {
 
     uint256 public indexPrice;
 
-    MyModule gnosisSafe = MyModule(0xEf73E58650868f316461936A092818d5dF96102E);
+    MyModule gnosisSafe;
     address private vault;
 
-    address[2] tokenDefult = [
+    address[4] tokenDefult = [
         0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c, // BTC
-        0x2170Ed0880ac9A755fd29B2688956BD959F933F8 // ETH
-    ];
+        0x2170Ed0880ac9A755fd29B2688956BD959F933F8, // ETH
+        0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE, // XRP
+        0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47 // ADA
 
-    uint96[2] denormsDefult = [1, 1];
-    //uint96[10] denormsDefult = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+        /*
+        working addresses blue chip
+
+        0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c, // BTC
+        0x2170Ed0880ac9A755fd29B2688956BD959F933F8, // ETH
+        0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE, // XRP
+        0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47 // ADA
+
+
+        working addresses for META
+
+        0x26433c8127d9b4e9B71Eaa15111DF99Ea2EeB2f8, // MANA
+        0x67b725d7e342d7B611fa85e859Df9697D9378B2e, // SAND
+        0x715D400F88C167884bbCc41C5FeA407ed4D2f8A0 // AXS
+
+
+        working addresses for TOP7
+        
+        0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c, // BTC
+        0x2170Ed0880ac9A755fd29B2688956BD959F933F8, // ETH
+        0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE, // XRP
+        0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47, // ADA
+        0x1CE0c2827e2eF14D5C4f29a091d735A204794041, // AVAX
+        0x7083609fCE4d1d8Dc0C979AAb8c869Ea2C873402, // DOT
+        0x85EAC5Ac2F758618dFa09bDbe0cf174e7d574D5B // TRX
+        */
+    ];
+    uint96[4] denormsDefult = [1, 1, 1, 1];
+    //uint96[5] denormsDefult = [1, 1, 1, 1, 1];
+    //uint96[7] denormsDefult = [1, 1, 1, 1, 1, 1, 1];
+    //uint96[9] denormsDefult = [1, 1, 1, 1, 1, 1, 1, 1, 1];
 
     struct rate {
         uint256 numerator;
@@ -540,13 +570,15 @@ contract IndexSwap is TokenBase, BMath {
         address _oracal,
         address _outAssest,
         address _pancakeSwapAddress,
-        address _vault
+        address _vault,
+        address _module
     ) {
         pancakeSwapRouter = IUniswapV2Router02(_pancakeSwapAddress);
         oracal = IPriceOracle(_oracal);
         vault = _vault;
         outAssest = _outAssest; //As now we are tacking busd
         assetManagers[msg.sender] = true;
+        gnosisSafe = MyModule(_module);
     }
 
     /** @dev Emitted when public trades are enabled. */
@@ -731,10 +763,10 @@ contract IndexSwap is TokenBase, BMath {
                 swapResultBNB.mul(swapResult[1]).div(1000000000000000000)
             );
         }
-        require(
+        /*require(
             investedAmountAfterSlippage <= tokenAmount,
             "amount after slippage can't be greater than before"
-        );
+        );*/
         // calculates the index token amount to mint invested amount after slippage is considered to make sure the index token amount represents the invested amount after slippage
         if (totalSupply() > 0) {
             tokenAmount = mintShareAmount(
