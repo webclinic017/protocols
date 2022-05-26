@@ -55,28 +55,35 @@ describe("Top 10 Index", () => {
     expect(currentRate.denominator).to.be.equal(denominator);
   });
 
-  it("Invest 1BNB into Top10 fund", async () => {
+  it("Invest 0.1BNB into Top10 fund", async () => {
     const indexSupplyBefore = await indexSwap.totalSupply();
-    //console.log(indexSupplyBefore);
+    console.log("0.1 before", indexSupplyBefore);
     await indexSwap.investInFund({
-      value: "1000000000000000000",
+      value: "100000000000000000",
     });
+    const indexSupplyAfter = await indexSwap.totalSupply();
+    console.log("0.1 after", indexSupplyAfter);
   });
 
-  it("Invest 1BNB into Top10 fund", async () => {
+  it("Invest 0.1BNB into Top10 fund", async () => {
     const indexSupplyBefore = await indexSwap.totalSupply();
-    //console.log(indexSupplyBefore);
+    console.log("0.1 before", indexSupplyBefore);
     await indexSwap.investInFund({
-      value: "1000000000000000000",
+      value: "100000000000000000",
     });
+    const indexSupplyAfter = await indexSwap.totalSupply();
+    console.log("0.1 after", indexSupplyAfter);
   });
 
-  it("Invest 2BNB into Top10 fund", async () => {
+  it("Invest 0.2BNB into Top10 fund", async () => {
     const indexSupplyBefore = await indexSwap.totalSupply();
-    //console.log(indexSupplyBefore);
+    console.log("0.2 before", indexSupplyBefore);
     await indexSwap.investInFund({
-      value: "2000000000000000000",
+      value: "200000000000000000",
     });
+
+    const indexSupplyAfter = await indexSwap.totalSupply();
+    console.log("0.2 after", indexSupplyAfter);
   });
 
   it("Update rate to 2,2", async () => {
