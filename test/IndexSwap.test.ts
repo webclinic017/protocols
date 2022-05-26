@@ -33,7 +33,8 @@ describe("Top 10 Index", () => {
       priceOracle.address, // price oracle
       "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", // wbnb
       "0x10ED43C718714eb63d5aA57B78B54704E256024E", // pancake router
-      "0xD2aDa2CC6f97cfc1045B1cF70b3149139aC5f2a2" // vault
+      "0xD2aDa2CC6f97cfc1045B1cF70b3149139aC5f2a2", // vault
+      "0xEf73E58650868f316461936A092818d5dF96102E" // myModule
     );
 
     await indexSwap.deployed();
@@ -55,41 +56,60 @@ describe("Top 10 Index", () => {
     expect(currentRate.denominator).to.be.equal(denominator);
   });
 
-  it("Invest 1BNB into Top10 fund", async () => {
-    const indexSupplyBefore = await indexSwap.totalSupply();
-    console.log("1bnb before", indexSupplyBefore);
-    await indexSwap.investInFund({
-      value: "1000000000000000000",
-    });
-    const indexSupplyAfter = await indexSwap.totalSupply();
-    console.log("1bnb after", indexSupplyAfter);
-
-    expect(Number(indexSupplyAfter)).to.be.greaterThanOrEqual(
-      Number(indexSupplyBefore)
-    );
+  it("Test amount and vault values", async () => {
+    const values = await indexSwap.getTokenAndVaultBalance();
+    console.log("tokenBalances", values[0]);
+    console.log("vault", values[1]);
   });
 
-  it("Invest 2BNB into Top10 fund", async () => {
+  it("Invest 0.11BNB into Top10 fund", async () => {
     const indexSupplyBefore = await indexSwap.totalSupply();
-    console.log("2bnb before", indexSupplyBefore);
-    await indexSwap.investInFund({
-      value: "2000000000000000000",
-    });
-    const indexSupplyAfter = await indexSwap.totalSupply();
-    console.log("2bnb after", indexSupplyAfter);
-
-    expect(Number(indexSupplyAfter)).to.be.greaterThanOrEqual(
-      Number(indexSupplyBefore)
-    );
-  });
-
-  it("Invest 0.1BNB into Top10 fund", async () => {
-    const indexSupplyBefore = await indexSwap.totalSupply();
-    //console.log(indexSupplyBefore);
+    console.log("0.1bnb before", indexSupplyBefore);
     await indexSwap.investInFund({
       value: "100000000000000000",
     });
     const indexSupplyAfter = await indexSwap.totalSupply();
+    console.log("0.1bnb after", indexSupplyAfter);
+
+    expect(Number(indexSupplyAfter)).to.be.greaterThanOrEqual(
+      Number(indexSupplyBefore)
+    );
+  });
+
+  it("Test amount and vault values", async () => {
+    const values = await indexSwap.getTokenAndVaultBalance();
+    console.log("tokenBalances", values[0]);
+    console.log("vault", values[1]);
+  });
+
+  it("Invest 0.2BNB into Top10 fund", async () => {
+    const indexSupplyBefore = await indexSwap.totalSupply();
+    console.log("0.2bnb before", indexSupplyBefore);
+    await indexSwap.investInFund({
+      value: "200000000000000000",
+    });
+    const indexSupplyAfter = await indexSwap.totalSupply();
+    console.log("0.2bnb after", indexSupplyAfter);
+
+    expect(Number(indexSupplyAfter)).to.be.greaterThanOrEqual(
+      Number(indexSupplyBefore)
+    );
+  });
+
+  it("Test amount and vault values", async () => {
+    const values = await indexSwap.getTokenAndVaultBalance();
+    console.log("tokenBalances", values[0]);
+    console.log("vault", values[1]);
+  });
+
+  it("Invest 0.1BNB into Top10 fund", async () => {
+    const indexSupplyBefore = await indexSwap.totalSupply();
+    console.log("0.1bnb before", indexSupplyBefore);
+    await indexSwap.investInFund({
+      value: "100000000000000000",
+    });
+    const indexSupplyAfter = await indexSwap.totalSupply();
+    console.log("0.1bnb after", indexSupplyAfter);
 
     expect(Number(indexSupplyAfter)).to.be.greaterThanOrEqual(
       Number(indexSupplyBefore)
@@ -98,12 +118,12 @@ describe("Top 10 Index", () => {
 
   it("Invest 0.2BNB into Top10 fund", async () => {
     const indexSupplyBefore = await indexSwap.totalSupply();
-    //console.log(indexSupplyBefore);
+    console.log("0.2bnb before", indexSupplyBefore);
     await indexSwap.investInFund({
       value: "200000000000000000",
     });
     const indexSupplyAfter = await indexSwap.totalSupply();
-    //console.log(indexSupplyAfter);
+    console.log("0.2bnb after", indexSupplyAfter);
 
     expect(Number(indexSupplyAfter)).to.be.greaterThanOrEqual(
       Number(indexSupplyBefore)

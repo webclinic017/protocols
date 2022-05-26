@@ -483,11 +483,10 @@ contract IndexSwap is TokenBase, BMath {
     MyModule gnosisSafe;
     address private vault;
 
-    address[4] tokenDefult = [
+    address[2] tokenDefault = [
         0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c, // BTC
-        0x2170Ed0880ac9A755fd29B2688956BD959F933F8, // ETH
-        0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE, // XRP
-        0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47 // ADA
+        //0x2170Ed0880ac9A755fd29B2688956BD959F933F8, // ETH
+        0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c // WBNB
 
         /*
         working addresses blue chip
@@ -516,7 +515,7 @@ contract IndexSwap is TokenBase, BMath {
         0x85EAC5Ac2F758618dFa09bDbe0cf174e7d574D5B // TRX
         */
     ];
-    uint96[4] denormsDefult = [1, 1, 1, 1];
+    uint96[2] denormsDefult = [1, 1];
     //uint96[5] denormsDefult = [1, 1, 1, 1, 1];
     //uint96[7] denormsDefult = [1, 1, 1, 1, 1, 1, 1];
     //uint96[9] denormsDefult = [1, 1, 1, 1, 1, 1, 1, 1, 1];
@@ -631,12 +630,12 @@ contract IndexSwap is TokenBase, BMath {
     }
 
     function initializeDefult() external onlyOwner {
-        uint256 len = tokenDefult.length;
+        uint256 len = tokenDefault.length;
         uint256 totalWeight = 0;
         uint256 sumPrice = 0;
 
         for (uint256 i = 0; i < len; i++) {
-            _records[tokenDefult[i]] = Record({
+            _records[tokenDefault[i]] = Record({
                 ready: true,
                 lastDenormUpdate: uint40(block.timestamp),
                 denorm: denormsDefult[i],
@@ -644,8 +643,14 @@ contract IndexSwap is TokenBase, BMath {
                 index: uint8(i),
                 balance: 0
             });
-            _tokens.push(tokenDefult[i]);
-            uint256 priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
+            _tokens.push(tokenDefault[i]);
+            uint256 priceToken;
+            if (tokenDefault[i] != pancakeSwapRouter.WETH()) {
+                priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
+            } else {
+                uint256 decimal = oracal.getDecimal(tokenDefault[i]);
+                priceToken = 10**decimal;
+            }
             sumPrice = sumPrice.add(priceToken);
             totalWeight = badd(totalWeight, denormsDefult[i]);
         }
@@ -684,10 +689,7 @@ contract IndexSwap is TokenBase, BMath {
     {
         uint256 indexTokenSupply = totalSupply();
 
-        return
-            _amount.mul(indexTokenSupply).mul(1000000000000000000).div(
-                sumPrice
-            );
+        return _amount.mul(indexTokenSupply).div(sumPrice);
     }
 
     function getTokenAndVaultBalance()
@@ -700,16 +702,27 @@ contract IndexSwap is TokenBase, BMath {
         uint256 vaultBalance = 0;
 
         if (totalSupply() > 0) {
-            // calculate the balance of all tokens in the vault (in BNB)
+            /* 
+                calculate the balance of all tokens in the vault (in BNB)
+                has to be calculated before the swap because after the balance will change 
+            */
             for (uint256 i = 0; i < len; i++) {
                 IERC20 token = IERC20(_tokens[i]);
                 uint256 tokenBalance = token.balanceOf(vault);
-
-                uint256 priceToken = oracal.getTokenPrice(
-                    _tokens[i],
-                    outAssest
-                );
-                uint256 tokenBalanceBNB = priceToken.mul(tokenBalance);
+                uint256 priceToken;
+                uint256 tokenBalanceBNB;
+                if (_tokens[i] == pancakeSwapRouter.WETH()) {
+                    IERC20 _token = IERC20(
+                        0x7083609fCE4d1d8Dc0C979AAb8c869Ea2C873402
+                    );
+                    tokenBalanceBNB = _token.balanceOf(vault);
+                } else {
+                    uint256 decimal = oracal.getDecimal(_tokens[i]);
+                    priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
+                    tokenBalanceBNB = priceToken.mul(tokenBalance).div(
+                        10**decimal
+                    );
+                }
                 tokenBalanceInBNB[i] = tokenBalanceBNB;
                 vaultBalance = vaultBalance.add(tokenBalanceBNB);
                 require(vaultBalance > 0, "sum price is not greater than 0");
@@ -728,10 +741,9 @@ contract IndexSwap is TokenBase, BMath {
         uint256[] memory amount = new uint256[](len);
         uint256[] memory tokenBalanceInBNB = new uint256[](len);
 
-        // has to be calculated before the swap because after the balance will change
         (tokenBalanceInBNB, vaultBalance) = getTokenAndVaultBalance();
 
-        // calculate the swap amount for each token to ensure the ratio (weight in the portfolio) stays constant
+        //calculate the swap amount for each token to ensure that the ratio (weight in the portfolio) stays constant
         if (totalSupply() > 0) {
             for (uint256 i = 0; i < _tokens.length; i++) {
                 amount[i] = tokenBalanceInBNB[i].mul(tokenAmount).div(
@@ -752,21 +764,38 @@ contract IndexSwap is TokenBase, BMath {
                 swapAmount = amount[i];
             }
 
-            uint256[] memory swapResult;
-            swapResult = pancakeSwapRouter.swapExactETHForTokens{
-                value: swapAmount
-            }(0, getPathForETH(t), vault, deadline);
+            uint256 swapResultBNB;
+            if (t == pancakeSwapRouter.WETH()) {
+                require(address(this).balance >= swapAmount, "not enough bnb");
+                //payable(vault).transfer(swapAmount);
+                pancakeSwapRouter.swapExactETHForTokens{value: swapAmount}(
+                    0,
+                    getPathForETH(0x7083609fCE4d1d8Dc0C979AAb8c869Ea2C873402),
+                    vault,
+                    deadline
+                );
+                swapResultBNB = swapAmount;
+                investedAmountAfterSlippage = investedAmountAfterSlippage.add(
+                    swapAmount
+                );
+            } else {
+                uint256[] memory swapResult;
+                swapResult = pancakeSwapRouter.swapExactETHForTokens{
+                    value: swapAmount
+                }(0, getPathForETH(t), vault, deadline);
 
-            // take the amount actually being swapped and convert it to BNB for calculation of the index token amount to mint
-            uint256 swapResultBNB = oracal.getTokenPrice(_tokens[i], outAssest);
-            investedAmountAfterSlippage = investedAmountAfterSlippage.add(
-                swapResultBNB.mul(swapResult[1]).div(1000000000000000000)
-            );
+                // take the amount actually being swapped and convert it to BNB for calculation of the index token amount to mint
+                swapResultBNB = oracal.getTokenPrice(_tokens[i], outAssest);
+                uint256 decimal = oracal.getDecimal(t);
+                investedAmountAfterSlippage = investedAmountAfterSlippage.add(
+                    swapResultBNB.mul(swapResult[1]).div(10**decimal)
+                );
+            }
         }
-        /*require(
+        require(
             investedAmountAfterSlippage <= tokenAmount,
             "amount after slippage can't be greater than before"
-        );*/
+        );
         // calculates the index token amount to mint invested amount after slippage is considered to make sure the index token amount represents the invested amount after slippage
         if (totalSupply() > 0) {
             tokenAmount = mintShareAmount(
@@ -800,23 +829,27 @@ contract IndexSwap is TokenBase, BMath {
             uint256 amount = tokenBalance.mul(tokenAmount).div(
                 totalSupplyIndex
             );
-            gnosisSafe.executeTransactionOther(
-                address(this),
-                amount,
-                address(t)
-            );
-            TransferHelper.safeApprove(
-                address(t),
-                address(pancakeSwapRouter),
-                amount
-            );
-            pancakeSwapRouter.swapExactTokensForETH(
-                amount,
-                0,
-                getPathForToken(t),
-                msg.sender,
-                deadline
-            );
+            if (t == pancakeSwapRouter.WETH()) {
+                gnosisSafe.executeTransactionETH(address(this), amount);
+            } else {
+                gnosisSafe.executeTransactionOther(
+                    address(this),
+                    amount,
+                    address(t)
+                );
+                TransferHelper.safeApprove(
+                    address(t),
+                    address(pancakeSwapRouter),
+                    amount
+                );
+                pancakeSwapRouter.swapExactTokensForETH(
+                    amount,
+                    0,
+                    getPathForToken(t),
+                    msg.sender,
+                    deadline
+                );
+            }
         }
     }
 
@@ -849,26 +882,34 @@ contract IndexSwap is TokenBase, BMath {
                     uint256 _swapAmount = tokenBalance.mul(weightDiff).div(
                         oldWeights[i]
                     );
-                    gnosisSafe.executeTransactionOther(
-                        address(this),
-                        _swapAmount,
-                        _tokens[i]
-                    );
-                    TransferHelper.safeApprove(
-                        _tokens[i],
-                        address(pancakeSwapRouter),
-                        _swapAmount
-                    );
-                    uint256[] memory swapResult;
-                    swapResult = pancakeSwapRouter.swapExactTokensForETH(
-                        _swapAmount,
-                        0,
-                        getPathForToken(_tokens[i]),
-                        address(this),
-                        deadline
-                    );
 
-                    totalBNBAmount.add(swapResult[1]);
+                    if (_tokens[i] == pancakeSwapRouter.WETH()) {
+                        gnosisSafe.executeTransactionETH(
+                            address(this),
+                            _swapAmount
+                        );
+                        totalBNBAmount.add(_swapAmount);
+                    } else {
+                        gnosisSafe.executeTransactionOther(
+                            address(this),
+                            _swapAmount,
+                            _tokens[i]
+                        );
+                        TransferHelper.safeApprove(
+                            _tokens[i],
+                            address(pancakeSwapRouter),
+                            _swapAmount
+                        );
+                        uint256[] memory swapResult;
+                        swapResult = pancakeSwapRouter.swapExactTokensForETH(
+                            _swapAmount,
+                            0,
+                            getPathForToken(_tokens[i]),
+                            address(this),
+                            deadline
+                        );
+                        totalBNBAmount.add(swapResult[1]);
+                    }
                 } else if (newWeights[i] > oldWeights[i]) {
                     uint256 diff = newWeights[i].sub(oldWeights[i]);
                     sumWeightsToSwap = sumWeightsToSwap.add(diff);

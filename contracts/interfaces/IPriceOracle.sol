@@ -33,6 +33,8 @@ interface IPriceOracle {
 
     function updateIndexPrice() external returns (uint224 price);
 
+    function getDecimal(address tokenAddress) external view returns (uint256);
+
     function getTokenPrice(address token_address, address token1_address)
         external
         view
