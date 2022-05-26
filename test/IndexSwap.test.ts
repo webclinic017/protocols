@@ -5,6 +5,8 @@ import { IndexSwap, PriceOracle } from "../typechain";
 import { BigNumber } from "ethers";
 
 var chai = require("chai");
+var bnbBefore = 0;
+var bnbAfter = 0;
 
 //use default BigNumber
 chai.use(require("chai-bignumber")());
@@ -55,14 +57,10 @@ describe("Top 10 Index", () => {
     expect(currentRate.denominator).to.be.equal(denominator);
   });
 
-  it("Invest 0.1BNB into Top10 fund", async () => {
-    const indexSupplyBefore = await indexSwap.totalSupply();
-    console.log("0.1 before", indexSupplyBefore);
-    await indexSwap.investInFund({
-      value: "100000000000000000",
-    });
-    const indexSupplyAfter = await indexSwap.totalSupply();
-    console.log("0.1 after", indexSupplyAfter);
+  it("Test amount and vault values", async () => {
+    const values = await indexSwap.getTokenAndVaultBalance();
+    console.log("tokenBalances", values[0]);
+    console.log("vault", values[1]);
   });
 
   it("Invest 0.1BNB into Top10 fund", async () => {
@@ -73,6 +71,24 @@ describe("Top 10 Index", () => {
     });
     const indexSupplyAfter = await indexSwap.totalSupply();
     console.log("0.1 after", indexSupplyAfter);
+  });
+
+  it("Test amount and vault values", async () => {
+    const values = await indexSwap.getTokenAndVaultBalance();
+    console.log("tokenBalances", values[0]);
+    console.log("vault", values[1]);
+  });
+
+  it("Invest 0.1BNB into Top10 fund", async () => {
+    const indexSupplyBefore = await indexSwap.totalSupply();
+    console.log("0.1 before", indexSupplyBefore);
+    await indexSwap.investInFund({
+      value: "100000000000000000",
+    });
+    const indexSupplyAfter = await indexSwap.totalSupply();
+    const valuesAfter = await indexSwap.getTokenAndVaultBalance();
+    const balancesAfter = valuesAfter[0];
+    bnbBefore = Number(balancesAfter[1]);
   });
 
   it("Invest 0.2BNB into Top10 fund", async () => {
@@ -81,9 +97,20 @@ describe("Top 10 Index", () => {
     await indexSwap.investInFund({
       value: "200000000000000000",
     });
-
     const indexSupplyAfter = await indexSwap.totalSupply();
-    console.log("0.2 after", indexSupplyAfter);
+    const valuesAfter = await indexSwap.getTokenAndVaultBalance();
+    const balancesAfter = valuesAfter[0];
+    bnbAfter = Number(balancesAfter[1]);
+  });
+
+  it("BNB amount increases after investing", async () => {
+    expect(bnbAfter).to.be.greaterThan(bnbBefore);
+  });
+
+  it("Test amount and vault values", async () => {
+    const values = await indexSwap.getTokenAndVaultBalance();
+    console.log("tokenBalances", values[0]);
+    console.log("vault", values[1]);
   });
 
   it("Update rate to 2,2", async () => {

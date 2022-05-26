@@ -485,18 +485,18 @@ contract IndexSwap is TokenBase, BMath {
 
     address private vault;
 
-    address[8] tokenDefault = [
+    address[2] tokenDefault = [
         0x8BaBbB98678facC7342735486C851ABD7A0d17Ca, // ETH -- already existed
-        0x8a9424745056Eb399FD19a0EC26A14316684e274, // DAI -- already existed
-        0x4b1851167f74FF108A994872A160f1D6772d474b, // BTC
+        0x8a9424745056Eb399FD19a0EC26A14316684e274 // DAI -- already existed
+        /*0x4b1851167f74FF108A994872A160f1D6772d474b, // BTC
         0xb7a58582Df45DBa8Ad346c6A51fdb796D64e0898, // STETH
         0x62955C6cA8Cd74F8773927B880966B7e70aD4567, // UNI
         0x2F9fd65E3BB89b68a8e2Abd68Db25F5C348F68Ee, // LTC
         0x8D908A42FD847c80Eeb4498dE43469882436c8FF, // LINK
-        0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd // WBNB
+        0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd // WBNB*/
     ];
 
-    uint96[8] denormsDefult = [1, 1, 1, 1, 1, 1, 1, 1];
+    uint96[2] denormsDefult = [1, 1];
 
     struct rate {
         uint256 numerator;
@@ -739,10 +739,7 @@ contract IndexSwap is TokenBase, BMath {
 
             uint256 swapResultBNB;
             if (t == pancakeSwapRouter.WETH()) {
-                require(
-                    swapAmount < tokenAmount.div(2),
-                    "swap amount too high"
-                );
+                require(address(this).balance >= swapAmount, "not enough bnb");
                 payable(vault).transfer(swapAmount);
                 swapResultBNB = swapAmount;
                 investedAmountAfterSlippage = investedAmountAfterSlippage.add(
@@ -859,7 +856,16 @@ contract IndexSwap is TokenBase, BMath {
                     uint256 _swapAmount = tokenBalance.mul(weightDiff).div(
                         oldWeights[i]
                     );
-                    if (_tokens[i] != pancakeSwapRouter.WETH()) {
+
+                    if (_tokens[i] == pancakeSwapRouter.WETH()) {
+                        TransferHelper.safeTransferFrom(
+                            _tokens[i],
+                            vault,
+                            address(this),
+                            _swapAmount
+                        );
+                        totalBNBAmount.add(_swapAmount);
+                    } else {
                         TransferHelper.safeTransferFrom(
                             _tokens[i],
                             vault,
@@ -879,6 +885,7 @@ contract IndexSwap is TokenBase, BMath {
                             address(this),
                             deadline
                         );
+                        totalBNBAmount.add(swapResult[1]);
                     }
                 } else if (newWeights[i] > oldWeights[i]) {
                     uint256 diff = newWeights[i].sub(oldWeights[i]);
