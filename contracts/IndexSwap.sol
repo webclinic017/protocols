@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IPriceOracle.sol";
+import "./interfaces/IWETH.sol";
 
 // // SPDX-License-Identifier: MIT
 // pragma solidity <=0.7.6;
@@ -485,19 +486,18 @@ contract IndexSwap is TokenBase, BMath {
 
     address private vault;
 
-    address[2] tokenDefault = [
+    address[8] tokenDefault = [
         0x8BaBbB98678facC7342735486C851ABD7A0d17Ca, // ETH -- already existed
-        0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd // WBNB
-        /*0x8a9424745056Eb399FD19a0EC26A14316684e274 // DAI -- already existed
+        0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd, // WBNB
+        0x8a9424745056Eb399FD19a0EC26A14316684e274, // DAI -- already existed
         0x4b1851167f74FF108A994872A160f1D6772d474b, // BTC
         0xb7a58582Df45DBa8Ad346c6A51fdb796D64e0898, // STETH
         0x62955C6cA8Cd74F8773927B880966B7e70aD4567, // UNI
         0x2F9fd65E3BB89b68a8e2Abd68Db25F5C348F68Ee, // LTC
-        0x8D908A42FD847c80Eeb4498dE43469882436c8FF, // LINK
-        0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd // WBNB*/
+        0x8D908A42FD847c80Eeb4498dE43469882436c8FF // LINK
     ];
 
-    uint96[2] denormsDefult = [1, 1];
+    uint96[8] denormsDefult = [1, 1, 1, 1, 1, 1, 1, 1];
 
     struct rate {
         uint256 numerator;
@@ -689,7 +689,7 @@ contract IndexSwap is TokenBase, BMath {
                 uint256 priceToken;
                 uint256 tokenBalanceBNB;
                 if (_tokens[i] == pancakeSwapRouter.WETH()) {
-                    tokenBalanceBNB = address(vault).balance;
+                    tokenBalanceBNB = tokenBalance;
                 } else {
                     uint256 decimal = oracal.getDecimal(_tokens[i]);
                     priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
@@ -740,8 +740,11 @@ contract IndexSwap is TokenBase, BMath {
 
             uint256 swapResultBNB;
             if (t == pancakeSwapRouter.WETH()) {
+                // wrap BNB to WBNB
                 require(address(this).balance >= swapAmount, "not enough bnb");
-                payable(vault).transfer(swapAmount);
+                IWETH token = IWETH(t);
+                token.deposit{value: swapAmount}();
+                token.transfer(vault, swapAmount);
                 swapResultBNB = swapAmount;
                 investedAmountAfterSlippage = investedAmountAfterSlippage.add(
                     swapAmount
@@ -793,12 +796,7 @@ contract IndexSwap is TokenBase, BMath {
             address t = _tokens[i];
 
             IERC20 token = IERC20(t);
-            uint256 tokenBalance;
-            if (t == pancakeSwapRouter.WETH()) {
-                tokenBalance = address(vault).balance;
-            } else {
-                tokenBalance = token.balanceOf(vault);
-            }
+            uint256 tokenBalance = token.balanceOf(vault);
             uint256 amount = tokenBalance.mul(tokenAmount).div(
                 totalSupplyIndex
             );
@@ -857,12 +855,7 @@ contract IndexSwap is TokenBase, BMath {
             for (uint256 i = 0; i < _tokens.length; i++) {
                 if (newWeights[i] < oldWeights[i]) {
                     IERC20 token = IERC20(_tokens[i]);
-                    uint256 tokenBalance;
-                    if (_tokens[i] == pancakeSwapRouter.WETH()) {
-                        tokenBalance = address(vault).balance;
-                    } else {
-                        tokenBalance = token.balanceOf(vault);
-                    }
+                    uint256 tokenBalance = token.balanceOf(vault);
                     uint256 weightDiff = oldWeights[i].sub(newWeights[i]);
                     uint256 _swapAmount = tokenBalance.mul(weightDiff).div(
                         oldWeights[i]
@@ -916,8 +909,9 @@ contract IndexSwap is TokenBase, BMath {
                         sumWeightsToSwap
                     );
                     if (t == pancakeSwapRouter.WETH()) {
-                        //simple transfer to vault
-                        TransferHelper.safeTransfer(t, vault, swapAmount);
+                        IWETH token = IWETH(t);
+                        token.deposit{value: swapAmount}();
+                        token.transfer(vault, swapAmount);
                     } else {
                         pancakeSwapRouter.swapExactETHForTokens{
                             value: swapAmount
