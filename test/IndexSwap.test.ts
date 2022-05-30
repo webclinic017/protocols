@@ -33,13 +33,19 @@ describe("Top 10 Index", () => {
       priceOracle.address, // price oracle
       "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", // wbnb
       "0x10ED43C718714eb63d5aA57B78B54704E256024E", // pancake router
-      "0xD2aDa2CC6f97cfc1045B1cF70b3149139aC5f2a2", // vault
-      "0xEf73E58650868f316461936A092818d5dF96102E" // myModule
+      "0x02B9eDF79660c2b5A24f2C379294bDe265Fd5c34", // vault
+      "0x7250C7A64C5BCbe4815E905C10F822C2DA7358Ef" // myModule
     );
 
     await indexSwap.deployed();
 
     console.log("priceOracle deployed to:", indexSwap.address);
+
+    const myModule = await ethers.getContractFactory("MyModule");
+    const module = myModule.attach(
+      "0x7250C7A64C5BCbe4815E905C10F822C2DA7358Ef"
+    );
+    await module.addOwner(indexSwap.address);
   });
 
   it("Initialize default", async () => {
@@ -62,7 +68,7 @@ describe("Top 10 Index", () => {
     console.log("vault", values[1]);
   });
 
-  it("Invest 0.11BNB into Top10 fund", async () => {
+  it("Invest 0.1BNB into Top10 fund", async () => {
     const indexSupplyBefore = await indexSwap.totalSupply();
     console.log("0.1bnb before", indexSupplyBefore);
     await indexSwap.investInFund({
@@ -128,6 +134,212 @@ describe("Top 10 Index", () => {
     expect(Number(indexSupplyAfter)).to.be.greaterThanOrEqual(
       Number(indexSupplyBefore)
     );
+  });
+
+  // This will fail if we use a used safe where some tokens are already included!!!
+  it("Equally weighted token allocation", async () => {
+    // get current weights and check
+    const values = await indexSwap.getTokenAndVaultBalance();
+    const tokenBalances = values[0];
+    const vaultBalance = values[1];
+    const t1 = Number(tokenBalances[0]) / Number(vaultBalance);
+    const t2 = Number(tokenBalances[1]) / Number(vaultBalance);
+    const t3 = Number(tokenBalances[2]) / Number(vaultBalance);
+    const t4 = Number(tokenBalances[3]) / Number(vaultBalance);
+    const t5 = Number(tokenBalances[4]) / Number(vaultBalance);
+    const t6 = Number(tokenBalances[5]) / Number(vaultBalance);
+    const t7 = Number(tokenBalances[6]) / Number(vaultBalance);
+    const t8 = Number(tokenBalances[7]) / Number(vaultBalance);
+    const t9 = Number(tokenBalances[8]) / Number(vaultBalance);
+    const t10 = Number(tokenBalances[9]) / Number(vaultBalance);
+
+    console.log("t1", Math.round(t1 * 100));
+    console.log("t2", Math.round(t2 * 100));
+    console.log("t3", Math.round(t3 * 100));
+    console.log("t4", Math.round(t4 * 100));
+    console.log("t5", Math.round(t5 * 100));
+    console.log("t6", Math.round(t6 * 100));
+    console.log("t7", Math.round(t7 * 100));
+    console.log("t8", Math.round(t8 * 100));
+    console.log("t9", Math.round(t9 * 100));
+    console.log("t10", Math.round(t10 * 100));
+
+    // 2% +/- for slippage and rounding
+    expect(Math.round(t1 * 100)).to.be.equal(10);
+
+    expect(Math.round(t2 * 100)).to.be.equal(10);
+
+    expect(Math.round(t3 * 100)).to.be.equal(10);
+
+    expect(Math.round(t4 * 100)).to.be.equal(10);
+
+    expect(Math.round(t5 * 100)).to.be.equal(10);
+
+    expect(Math.round(t6 * 100)).to.be.equal(10);
+
+    expect(Math.round(t7 * 100)).to.be.equal(10);
+
+    expect(Math.round(t8 * 100)).to.be.equal(10);
+
+    expect(Math.round(t9 * 100)).to.be.equal(10);
+
+    expect(Math.round(t10 * 100)).to.be.equal(10);
+  });
+
+  it("Withdraw evreything from fund", async () => {
+    const indexAmount = await indexSwap.balanceOf(owner.address);
+    await indexSwap.withdrawFromFundNew(indexAmount);
+
+    const indexAmountAfterWithdrawal = await indexSwap.balanceOf(owner.address);
+    expect(indexAmountAfterWithdrawal).to.be.equal(0);
+  });
+
+  it("Invest 0.1BNB into Top10 fund", async () => {
+    const indexSupplyBefore = await indexSwap.totalSupply();
+    console.log("0.1bnb before", indexSupplyBefore);
+    await indexSwap.investInFund({
+      value: "100000000000000000",
+    });
+    const indexSupplyAfter = await indexSwap.totalSupply();
+    console.log("0.1bnb after", indexSupplyAfter);
+
+    expect(Number(indexSupplyAfter)).to.be.greaterThanOrEqual(
+      Number(indexSupplyBefore)
+    );
+  });
+
+  it("Withdrawing more index token than possible, supposed to fail", async () => {
+    const indexAmount = await indexSwap.balanceOf(owner.address);
+    console.log(indexAmount);
+    await expect(
+      indexSwap.withdrawFromFundNew(indexAmount.mul(2))
+    ).to.be.revertedWith("not balance");
+  });
+
+  it("Rebalance to 30/10/10/20/5/5/5/5/5/5", async () => {
+    let newWeights = [3000, 1000, 1000, 2000, 500, 500, 500, 500, 500, 500];
+    await indexSwap.rebalance(newWeights);
+
+    // get current weights and check
+    const values = await indexSwap.getTokenAndVaultBalance();
+    const tokenBalances = values[0];
+    const vaultBalance = values[1];
+    const t1 = Number(tokenBalances[0]) / Number(vaultBalance);
+    const t2 = Number(tokenBalances[1]) / Number(vaultBalance);
+    const t3 = Number(tokenBalances[2]) / Number(vaultBalance);
+    const t4 = Number(tokenBalances[3]) / Number(vaultBalance);
+    const t5 = Number(tokenBalances[4]) / Number(vaultBalance);
+    const t6 = Number(tokenBalances[5]) / Number(vaultBalance);
+    const t7 = Number(tokenBalances[6]) / Number(vaultBalance);
+    const t8 = Number(tokenBalances[7]) / Number(vaultBalance);
+    const t9 = Number(tokenBalances[8]) / Number(vaultBalance);
+    const t10 = Number(tokenBalances[9]) / Number(vaultBalance);
+
+    console.log("t1", Math.round(t1 * 100));
+    console.log("t2", Math.round(t2 * 100));
+    console.log("t3", Math.round(t3 * 100));
+    console.log("t4", Math.round(t4 * 100));
+    console.log("t5", Math.round(t5 * 100));
+    console.log("t6", Math.round(t6 * 100));
+    console.log("t7", Math.round(t7 * 100));
+    console.log("t8", Math.round(t8 * 100));
+    console.log("t9", Math.round(t9 * 100));
+    console.log("t10", Math.round(t10 * 100));
+
+    // 2% +/- for slippage and rounding
+    expect(Math.round(t1 * 100))
+      .to.be.greaterThanOrEqual(28)
+      .and.to.be.lessThanOrEqual(32);
+
+    expect(Math.round(t2 * 100))
+      .to.be.greaterThanOrEqual(8)
+      .and.to.be.lessThanOrEqual(12);
+
+    expect(Math.round(t3 * 100))
+      .to.be.greaterThanOrEqual(8)
+      .and.to.be.lessThanOrEqual(12);
+
+    expect(Math.round(t4 * 100))
+      .to.be.greaterThanOrEqual(18)
+      .and.to.be.lessThanOrEqual(22);
+
+    expect(Math.round(t5 * 100))
+      .to.be.greaterThanOrEqual(3)
+      .and.to.be.lessThanOrEqual(7);
+
+    expect(Math.round(t6 * 100))
+      .to.be.greaterThanOrEqual(3)
+      .and.to.be.lessThanOrEqual(7);
+
+    expect(Math.round(t7 * 100))
+      .to.be.greaterThanOrEqual(3)
+      .and.to.be.lessThanOrEqual(7);
+
+    expect(Math.round(t8 * 100))
+      .to.be.greaterThanOrEqual(3)
+      .and.to.be.lessThanOrEqual(7);
+
+    expect(Math.round(t9 * 100))
+      .to.be.greaterThanOrEqual(3)
+      .and.to.be.lessThanOrEqual(7);
+
+    expect(Math.round(t10 * 100))
+      .to.be.greaterThan(3)
+      .and.to.be.lessThanOrEqual(7);
+  });
+
+  it("Rebalance to equally weighted (10% each)", async () => {
+    let newWeights = [
+      1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
+    ];
+    await indexSwap.rebalance(newWeights);
+
+    // get current weights and check
+    const values = await indexSwap.getTokenAndVaultBalance();
+    const tokenBalances = values[0];
+    const vaultBalance = values[1];
+    const t1 = Number(tokenBalances[0]) / Number(vaultBalance);
+    const t2 = Number(tokenBalances[1]) / Number(vaultBalance);
+    const t3 = Number(tokenBalances[2]) / Number(vaultBalance);
+    const t4 = Number(tokenBalances[3]) / Number(vaultBalance);
+    const t5 = Number(tokenBalances[4]) / Number(vaultBalance);
+    const t6 = Number(tokenBalances[5]) / Number(vaultBalance);
+    const t7 = Number(tokenBalances[6]) / Number(vaultBalance);
+    const t8 = Number(tokenBalances[7]) / Number(vaultBalance);
+    const t9 = Number(tokenBalances[8]) / Number(vaultBalance);
+    const t10 = Number(tokenBalances[9]) / Number(vaultBalance);
+
+    console.log("t1", Math.round(t1 * 100));
+    console.log("t2", Math.round(t2 * 100));
+    console.log("t3", Math.round(t3 * 100));
+    console.log("t4", Math.round(t4 * 100));
+    console.log("t5", Math.round(t5 * 100));
+    console.log("t6", Math.round(t6 * 100));
+    console.log("t7", Math.round(t7 * 100));
+    console.log("t8", Math.round(t8 * 100));
+    console.log("t9", Math.round(t9 * 100));
+    console.log("t10", Math.round(t10 * 100));
+
+    // 2% +/- for slippage and rounding
+    expect(Math.round(t1 * 100)).to.be.equal(10);
+
+    expect(Math.round(t2 * 100)).to.be.equal(10);
+
+    expect(Math.round(t3 * 100)).to.be.equal(10);
+
+    expect(Math.round(t4 * 100)).to.be.equal(10);
+
+    expect(Math.round(t5 * 100)).to.be.equal(10);
+
+    expect(Math.round(t6 * 100)).to.be.equal(10);
+
+    expect(Math.round(t7 * 100)).to.be.equal(10);
+
+    expect(Math.round(t8 * 100)).to.be.equal(10);
+
+    expect(Math.round(t9 * 100)).to.be.equal(10);
+
+    expect(Math.round(t10 * 100)).to.be.equal(10);
   });
 
   it("Update rate to 2,2", async () => {
