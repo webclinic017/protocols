@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IPriceOracle.sol";
 import "./MyModule.sol";
+import "./interfaces/IWETH.sol";
 
 // // SPDX-License-Identifier: MIT
 // pragma solidity <=0.7.6;
@@ -650,8 +651,7 @@ contract IndexSwap is TokenBase, BMath {
             if (tokenDefault[i] != pancakeSwapRouter.WETH()) {
                 priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
             } else {
-                uint256 decimal = oracal.getDecimal(tokenDefault[i]);
-                priceToken = 10**decimal;
+                priceToken = 10**18;
             }
             sumPrice = sumPrice.add(priceToken);
             totalWeight = badd(totalWeight, denormsDefult[i]);
@@ -766,7 +766,10 @@ contract IndexSwap is TokenBase, BMath {
             uint256 swapResultBNB;
             if (t == pancakeSwapRouter.WETH()) {
                 require(address(this).balance >= swapAmount, "not enough bnb");
-                //payable(vault).transfer(swapAmount);
+                IWETH token = IWETH(t);
+                token.deposit{value: swapAmount}();
+                token.transfer(vault, swapAmount);
+
                 swapResultBNB = swapAmount;
                 investedAmountAfterSlippage = investedAmountAfterSlippage.add(
                     swapAmount
@@ -932,8 +935,9 @@ contract IndexSwap is TokenBase, BMath {
                         sumWeightsToSwap
                     );
                     if (t == pancakeSwapRouter.WETH()) {
-                        //simple transfer to vault
-                        TransferHelper.safeTransfer(t, vault, swapAmount);
+                        IWETH token = IWETH(t);
+                        token.deposit{value: swapAmount}();
+                        token.transfer(vault, swapAmount);
                     } else {
                         pancakeSwapRouter.swapExactETHForTokens{
                             value: swapAmount
