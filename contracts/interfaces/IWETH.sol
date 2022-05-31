@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.4 || ^0.7.6 || ^0.8.0;
+pragma solidity ^0.8.4;
 
 interface IWETH {
     function deposit() external payable;
