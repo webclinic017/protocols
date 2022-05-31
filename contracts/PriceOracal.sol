@@ -223,7 +223,17 @@ contract PriceOracle is IPriceOracle {
         require(token0 != address(0), "PancakeLibrary: ZERO_ADDRESS");
     }
 
-      /**
+    function getDecimal(address tokenAddress)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return IERC20Metadata(tokenAddress).decimals();
+    }
+
+    /**
+
      * @notice Returns the USD price for a particular BEP20 token.
      * @param token_address address of BEP20 token contract
      * @param token1_address address of USDT token contract

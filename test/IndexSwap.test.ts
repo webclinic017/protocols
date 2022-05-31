@@ -3,7 +3,14 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { IndexSwap, PriceOracle, IERC20__factory } from "../typechain";
 import { BigNumber } from "ethers";
+<<<<<<< HEAD
 import { chainIdToAddresses } from "../scripts/networkVariables";
+=======
+
+var chai = require("chai");
+var bnbBefore = 0;
+var bnbAfter = 0;
+>>>>>>> refactoring
 
 //use default BigNumber
 // chai.use(require("chai-bignumber")());
