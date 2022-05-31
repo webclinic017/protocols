@@ -6,19 +6,19 @@ import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IPriceOracle.sol";
 import "./interfaces/IBalancerLib.sol";
-
+import "./interfaces/IWETH.sol";
 
 contract TokenBase is ERC20, ERC20Burnable, Ownable {
     constructor() ERC20("INDEXLY", "IDX") {}
 }
 
 contract IndexSwap is TokenBase, BMath {
-
     IUniswapV2Router02 public pancakeSwapRouter;
 
     // IERC20 public token;
@@ -79,6 +79,7 @@ contract IndexSwap is TokenBase, BMath {
     uint256 public totalBNBAmount;
     uint256 public sumWeightsToSwap;
     uint256 public swapAmount;
+
     constructor(
         address _oracal,
         address _outAssest,
@@ -196,7 +197,7 @@ contract IndexSwap is TokenBase, BMath {
                 IERC20 token = IERC20(_tokens[i]);
                 uint256 tokenBalance = token.balanceOf(vault);
 
-               uint256 priceToken = oracal.getTokenPrice(
+                uint256 priceToken = oracal.getTokenPrice(
                     _tokens[i],
                     outAssest
                 );
@@ -240,20 +241,118 @@ contract IndexSwap is TokenBase, BMath {
         */
         uint256 deadline = block.timestamp + 15; // using 'now' for convenience, for mainnet pass deadline from frontend!
         for (uint256 i = 0; i < _tokens.length; i++) {
+            IERC20Metadata t =IERC20Metadata(_tokens[i]);
+            Record memory record = _records[address(t)];
+            uint256 swapAmount;
+            if (totalSupply() == 0) {
+                swapAmount = tokenAmount.mul(record.denorm).div(_totalWeight);
+            } else {
+                swapAmount = amount[i];
+            }
+
+            uint256 swapResultBNB;
+
+            if (address(t) == pancakeSwapRouter.WETH()) {
+                require(address(this).balance >= swapAmount, "not enough bnb");
+                IWETH token = IWETH(address(t));
+                token.deposit{value: swapAmount}();
+                token.transfer(vault, swapAmount);
+                swapResultBNB = swapAmount;
+                investedAmountAfterSlippage = investedAmountAfterSlippage.add(
+                    swapAmount
+                );
+            } else {
+
+                uint256[] memory swapResult;
+                swapResult = pancakeSwapRouter.swapExactETHForTokens{
+                    value: swapAmount
+                }(0, getPathForETH(address(t)), vault, deadline);
+
+                // take the amount actually being swapped and convert it to BNB for calculation of the index token amount to mint
+                swapResultBNB = oracal.getTokenPrice(_tokens[i], outAssest);
+                uint256 decimal = t.decimals();
+                investedAmountAfterSlippage = investedAmountAfterSlippage.add(
+                    swapResultBNB.mul(swapResult[1]).div(10**decimal)
+                );
+            }
+
+            /*
+                take the amount actually being swapped and convert it to BNB
+                for calculation of the index token amount to mint
+            */
+            // uint256 swapResultBNB = oracal.getTokenPrice(_tokens[i], outAssest);
+           
+        }
+        require(
+            investedAmountAfterSlippage <= tokenAmount,
+            "amount after slippage can't be greater than before"
+        );
+        /*
+            calculates the index token amount to mint invested amount after slippage is considered
+            to make sure the index token amount represents the invested amount after slippage
+        */
+        if (totalSupply() > 0) {
+            tokenAmount = mintShareAmount(
+                investedAmountAfterSlippage,
+                vaultBalance
+            );
+        } else {
+            tokenAmount = investedAmountAfterSlippage;
+        }
+
+        _mint(msg.sender, tokenAmount);
+
+        // refund leftover ETH to user
+        (bool success, ) = msg.sender.call{value: address(this).balance}("");
+        require(success, "refund failed");
+    }
+
+    function investInFundToken(uint256 tokenAmount) public {
+        // uint256 tokenAmount = msg.value;
+        uint256 investedAmountAfterSlippage = 0;
+        uint256 vaultBalance = 0;
+        uint256 len = _tokens.length;
+        uint256[] memory amount = new uint256[](len);
+        uint256[] memory tokenBalanceInBNB = new uint256[](len);
+
+        (tokenBalanceInBNB, vaultBalance) = getTokenAndVaultBalance();
+
+        /* 
+            calculate the swap amount for each token
+            ensures that the ratio (weight in the portfolio) stays constant
+        */
+        if (totalSupply() > 0) {
+            for (uint256 i = 0; i < _tokens.length; i++) {
+                amount[i] = tokenBalanceInBNB[i].mul(tokenAmount).div(
+                    vaultBalance
+                );
+            }
+        }
+
+        /*
+            swap tokens from BNB to tokens in portfolio
+            swapResult[1]: swapped token amount
+        */
+        uint256 deadline = block.timestamp + 15; // using 'now' for convenience, for mainnet pass deadline from frontend!
+        for (uint256 i = 0; i < _tokens.length; i++) {
             address t = _tokens[i];
             Record memory record = _records[t];
             uint256 swapAmount;
             if (totalSupply() == 0) {
                 swapAmount = tokenAmount.mul(record.denorm).div(_totalWeight);
             } else {
-
                 swapAmount = amount[i];
             }
 
             uint256[] memory swapResult;
-            swapResult = pancakeSwapRouter.swapExactETHForTokens{
-                value: swapAmount
-            }(0, getPathForETH(t), vault, deadline);
+
+            swapResult = pancakeSwapRouter.swapExactTokensForTokens(
+                swapAmount,
+                0,
+                getPathForETH(t),
+                vault,
+                deadline
+            );
 
             /*
                 take the amount actually being swapped and convert it to BNB
@@ -289,7 +388,10 @@ contract IndexSwap is TokenBase, BMath {
     }
 
     function withdrawFund(uint256 tokenAmount) public {
-        require(tokenAmount <= balanceOf(msg.sender), "caller is not holding given token amount");
+        require(
+            tokenAmount <= balanceOf(msg.sender),
+            "caller is not holding given token amount"
+        );
 
         uint256 deadline = block.timestamp + 15;
         uint256 totalSupplyIndex = totalSupply();
@@ -366,20 +468,27 @@ contract IndexSwap is TokenBase, BMath {
                         address(pancakeSwapRouter),
                         _swapAmount
                     );
-                    uint256[] memory swapResult;
-                    swapResult = pancakeSwapRouter.swapExactTokensForETH(
-                        _swapAmount,
-                        0,
-                        getPathForToken(_tokens[i]),
-                        address(this),
-                        deadline
-                    );
+                    uint256 swapResult;
+                    if (_tokens[i] == pancakeSwapRouter.WETH()) {
+                        IWETH(_tokens[i]).withdraw(_swapAmount);
+                        swapResult = _swapAmount;
+                    } else {
+                        swapResult = pancakeSwapRouter.swapExactTokensForETH(
+                            _swapAmount,
+                            0,
+                            getPathForToken(_tokens[i]),
+                            address(this),
+                            deadline
+                        )[1];
+                    }
 
-                    totalBNBAmount.add(swapResult[1]);
+                    totalBNBAmount.add(swapResult);
                 } else if (newWeights[i] > oldWeights[i]) {
                     uint256 diff = newWeights[i].sub(oldWeights[i]);
                     sumWeightsToSwap = sumWeightsToSwap.add(diff);
                 }
+                 _records[_tokens[i]].denorm= uint96(newWeights[i]);
+
             }
 
             // buy - swap from BNB to token
@@ -393,13 +502,17 @@ contract IndexSwap is TokenBase, BMath {
                     uint256 swapAmount = totalBNBAmount.mul(weightToSwap).div(
                         sumWeightsToSwap
                     );
-                    pancakeSwapRouter.swapExactETHForTokens{value: swapAmount}(
-                        0,
-                        getPathForETH(t),
-                        vault,
-                        deadline
-                    );
+                    
+                    if (t == pancakeSwapRouter.WETH()) {
+                        IWETH(t).deposit{value: swapAmount}();
+                        TransferHelper.safeTransfer(t, vault, swapAmount);
+                    } else {
+                        pancakeSwapRouter.swapExactETHForTokens{
+                            value: swapAmount
+                        }(0, getPathForETH(t), vault, deadline);
+                    }
                 }
+
             }
         }
     }

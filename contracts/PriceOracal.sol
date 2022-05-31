@@ -223,7 +223,7 @@ contract PriceOracle is IPriceOracle {
         require(token0 != address(0), "PancakeLibrary: ZERO_ADDRESS");
     }
 
-    /**
+      /**
      * @notice Returns the USD price for a particular BEP20 token.
      * @param token_address address of BEP20 token contract
      * @param token1_address address of USDT token contract
@@ -232,25 +232,26 @@ contract PriceOracle is IPriceOracle {
         external
         view
         override
-        returns (uint256)
+        returns (uint256 price)
     {
         uint256 token_decimals = IERC20Metadata(token_address).decimals();
         uint256 min_amountIn = 1 * 10**token_decimals;
-        address _pair = IUniswapV2Factory(uniswapV2Router.factory()).getPair(
-            token_address,
-            token1_address
-        );
-        (
-            uint256 reserve0,
-            uint256 reserve1,
-            uint256 blockTimestampLast
-        ) = IUniswapV2Pair(_pair).getReserves();
-        uint256 price = uniswapV2Router.getAmountOut(
-            min_amountIn,
-            reserve0,
-            reserve1
-        );
-        return price;
+        if (token_address == token1_address) {
+            price = min_amountIn;
+        } else {
+            address _pair = IUniswapV2Factory(uniswapV2Router.factory())
+                .getPair(token_address, token1_address);
+            (
+                uint256 reserve0,
+                uint256 reserve1,
+                uint256 blockTimestampLast
+            ) = IUniswapV2Pair(_pair).getReserves();
+            price = uniswapV2Router.getAmountOut(
+                min_amountIn,
+                reserve0,
+                reserve1
+            );
+        }
     }
 
     /** **Ensures pairing between tokens.**
