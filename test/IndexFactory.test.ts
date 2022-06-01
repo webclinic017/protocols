@@ -1,16 +1,22 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { IndexSwap, PriceOracle, IERC20__factory } from "../typechain";
+import {
+  IndexSwap,
+  PriceOracle,
+  IERC20__factory,
+  IndexFactory,
+} from "../typechain";
 import { chainIdToAddresses } from "../scripts/networkVariables";
 
 //use default BigNumber
 // chai.use(require("chai-bignumber")());
 
-describe.only("Tests for IndexSwap", () => {
+describe.only("Tests for IndexFactory", () => {
   let accounts;
   let priceOracle: PriceOracle;
   let indexSwap: IndexSwap;
+  let indexFactory: IndexFactory;
   let txObject;
   let owner: SignerWithAddress;
   let nonOwner: SignerWithAddress;
@@ -57,7 +63,7 @@ describe.only("Tests for IndexSwap", () => {
   // const wbnbInstance.address =addresses.WETH_Address;
   // const btcInstance.address = addresses.BTC_Address;
   // const ethInstance.address = addresses.ETH_Address;
-  describe.only("Tests for IndexSwap contract", () => {
+  describe.only("Tests for IndexFactory contract", () => {
     before(async () => {
       accounts = await ethers.getSigners();
       [owner, investor1, nonOwner, vault, addr1, addr2, ...addrs] = accounts;
@@ -67,15 +73,25 @@ describe.only("Tests for IndexSwap", () => {
       await priceOracle.deployed();
       await priceOracle.initialize(addresses.PancakeSwapRouterAddress);
 
-      const IndexSwap = await ethers.getContractFactory("IndexSwap");
-      indexSwap = await IndexSwap.deploy(
-        priceOracle.address, // price oracle
+      const IndexFactory = await ethers.getContractFactory("IndexFactory");
+      indexFactory = await IndexFactory.deploy();
+
+      let indexAddress = "";
+
+      const index = await indexFactory.createIndex(
+        priceOracle.address,
         addresses.WETH_Address,
         addresses.PancakeSwapRouterAddress,
-        vault.address
+        addresses.Vault
       );
 
-      await indexSwap.deployed();
+      const result = index.to;
+      if (result) {
+        indexAddress = result.toString();
+      }
+
+      const IndexSwap = await ethers.getContractFactory("IndexSwap");
+      indexSwap = await IndexSwap.attach(indexAddress);
 
       await busdInstance
         .connect(vault)
@@ -96,7 +112,32 @@ describe.only("Tests for IndexSwap", () => {
       console.log("indexSwap deployed to:", indexSwap.address);
     });
 
-    describe("IndexSwap Contract", function () {
+    describe("IndexFactory Contract", function () {
+      it("init", async () => {
+        let indexAddress = "";
+
+        const index = await indexFactory.createIndex(
+          priceOracle.address,
+          addresses.WETH_Address,
+          addresses.PancakeSwapRouterAddress,
+          addresses.Vault
+        );
+
+        console.log("index return from factory", index);
+
+        const result = index.to;
+        if (result) {
+          indexAddress = result.toString();
+        }
+
+        const IndexSwap = await ethers.getContractFactory("IndexSwap");
+        indexSwap = await IndexSwap.attach(indexAddress);
+      });
+
+      it("Initialize IndexFund Tokens", async () => {
+        console.log(indexSwap.address);
+      });
+
       it("Initialize IndexFund Tokens", async () => {
         await indexSwap
           .connect(owner)

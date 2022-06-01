@@ -44,10 +44,10 @@ async function main() {
   console.log("indexSwap deployed to:", indexSwap.address);
 
   //initialize index based on network
-  await indexSwap.initialize([
-    addresses.ETH_Address,
-    addresses.BTC_Address,
-  ],[1,1]);
+  await indexSwap.initialize(
+    [addresses.ETH_Address, addresses.BTC_Address],
+    [1, 1]
+  );
 
   console.log(
     `You did it! View your tx here: ${ETHERSCAN_TX_URL}${priceOracle.deployTransaction.hash}`
