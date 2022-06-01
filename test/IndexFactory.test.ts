@@ -75,6 +75,7 @@ describe.only("Tests for IndexFactory", () => {
 
       const IndexFactory = await ethers.getContractFactory("IndexFactory");
       indexFactory = await IndexFactory.deploy();
+      await indexFactory.deployed();
 
       let indexAddress = "";
 

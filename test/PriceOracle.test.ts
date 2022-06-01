@@ -2,7 +2,8 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Price } from "@uniswap/sdk";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { PriceOracle } from "../typechain";
+import { PriceOracle, IERC20__factory } from "../typechain";
+import { chainIdToAddresses } from "../scripts/networkVariables";
 
 describe("Price Oracle", () => {
   let priceOracle: PriceOracle;
@@ -11,7 +12,41 @@ describe("Price Oracle", () => {
   let addr2: SignerWithAddress;
   let addrs: SignerWithAddress[];
 
+  const forkChainId: any = process.env.FORK_CHAINID;
   const provider = ethers.provider;
+  const chainId: any = forkChainId ? forkChainId : 97;
+  const addresses = chainIdToAddresses[chainId];
+
+  const wbnbInstance = new ethers.Contract(
+    addresses.WETH_Address,
+    IERC20__factory.abi,
+    ethers.getDefaultProvider()
+  );
+  const busdInstance = new ethers.Contract(
+    addresses.BUSD,
+    IERC20__factory.abi,
+    ethers.getDefaultProvider()
+  );
+  const daiInstance = new ethers.Contract(
+    addresses.DAI_Address,
+    IERC20__factory.abi,
+    ethers.getDefaultProvider()
+  );
+  const ethInstance = new ethers.Contract(
+    addresses.ETH_Address,
+    IERC20__factory.abi,
+    ethers.getDefaultProvider()
+  );
+  const btcInstance = new ethers.Contract(
+    addresses.BTC_Address,
+    IERC20__factory.abi,
+    ethers.getDefaultProvider()
+  );
+  const linkInstance = new ethers.Contract(
+    addresses.LINK_Address,
+    IERC20__factory.abi,
+    ethers.getDefaultProvider()
+  );
 
   before(async () => {
     [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
@@ -20,29 +55,29 @@ describe("Price Oracle", () => {
     priceOracle = await PriceOracle.deploy();
 
     await priceOracle.deployed();
-    await priceOracle.initialize("0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3");
+    await priceOracle.initialize(addresses.PancakeSwapRouterAddress);
   });
   // BTC
   it("Get token price of BTC", async () => {
-    const btc = "0x4b1851167f74FF108A994872A160f1D6772d474b";
-    const wbnb = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
+    const btc = addresses.btc;
+    const wbnb = addresses.wbnb;
     priceOracle.getTokenPrice(wbnb, btc).then((resp) => {
       expect(resp).to.be.greaterThanOrEqual(0);
     });
   });
 
   it("Get price of BTC for 100 BNB", async () => {
-    const btc = "0x4b1851167f74FF108A994872A160f1D6772d474b";
-    const wbnb = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
-    const path = [btc, wbnb];
+    const btc = btcInstance.address;
+    const wbnb = wbnbInstance.address;
+    const path = [btcInstance.address, wbnbInstance.address];
     priceOracle.getPrice("100", path).then((resp) => {
       expect(resp).to.be.greaterThanOrEqual(0);
     });
   });
 
   it("Get pair address of BTC and WBNB", async () => {
-    const btc = "0x4b1851167f74FF108A994872A160f1D6772d474b";
-    const wbnb = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
+    const btc = btcInstance.address;
+    const wbnb = wbnbInstance.address;
     let pairAdress = "0x0000000000000000000000000000000000000000";
     priceOracle.getPairAddress(btc, wbnb).then((resp) => {
       expect(pairAdress).not.to.be.equal(
@@ -53,8 +88,8 @@ describe("Price Oracle", () => {
 
   // ETH
   it("Get price of ETH for 100 BNB", async () => {
-    const eth = "0x8BaBbB98678facC7342735486C851ABD7A0d17Ca";
-    const wbnb = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
+    const eth = ethInstance.address;
+    const wbnb = wbnbInstance.address;
     const path = [eth, wbnb];
     priceOracle.getPrice("100", path).then((resp) => {
       expect(resp).to.be.greaterThanOrEqual(0);
@@ -62,8 +97,8 @@ describe("Price Oracle", () => {
   });
 
   it("Get pair address of ETH and WBNB", async () => {
-    const eth = "0x8BaBbB98678facC7342735486C851ABD7A0d17Ca";
-    const wbnb = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
+    const eth = ethInstance.address;
+    const wbnb = wbnbInstance.address;
     priceOracle.getPairAddress(eth, wbnb).then((resp) => {
       expect(resp).not.to.be.equal(
         "0x0000000000000000000000000000000000000000"
@@ -72,8 +107,8 @@ describe("Price Oracle", () => {
   });
 
   it("Get ETH token price of WBNB", async () => {
-    const eth = "0x8BaBbB98678facC7342735486C851ABD7A0d17Ca";
-    const wbnb = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
+    const eth = ethInstance.address;
+    const wbnb = wbnbInstance.address;
     priceOracle.getTokenPrice(wbnb, eth).then((resp) => {
       expect(resp).to.be.greaterThanOrEqual(0);
     });
@@ -81,8 +116,8 @@ describe("Price Oracle", () => {
 
   // USDT
   it("Get price of USDT for 100 BNB", async () => {
-    const usd = "0x55d398326f99059fF775485246999027B3197955";
-    const wbnb = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
+    const usd = busdInstance.address;
+    const wbnb = wbnbInstance.address;
     const path = [usd, wbnb];
     priceOracle.getPrice("100", path).then((resp) => {
       expect(resp).to.be.greaterThanOrEqual(0);
@@ -90,8 +125,8 @@ describe("Price Oracle", () => {
   });
 
   it("Get pair address of USDT and WBNB", async () => {
-    const usd = "0x55d398326f99059fF775485246999027B3197955";
-    const wbnb = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
+    const usd = busdInstance.address;
+    const wbnb = wbnbInstance.address;
     priceOracle.getPairAddress(usd, wbnb).then((resp) => {
       expect(resp).not.to.be.equal(
         "0x0000000000000000000000000000000000000000"
@@ -100,24 +135,24 @@ describe("Price Oracle", () => {
   });
 
   it("Get USDT token price of WBNB", async () => {
-    const usd = "0x55d398326f99059fF775485246999027B3197955";
-    const wbnb = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
+    const usd = busdInstance.address;
+    const wbnb = wbnbInstance.address;
     priceOracle.getTokenPrice(wbnb, usd).then((resp) => {
       expect(resp).to.be.greaterThanOrEqual(0);
     });
   });
   // LINK
   it("Get token price of LINK", async () => {
-    const link = "0x8D908A42FD847c80Eeb4498dE43469882436c8FF";
-    const wbnb = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
+    const link = linkInstance.address;
+    const wbnb = wbnbInstance.address;
     priceOracle.getTokenPrice(wbnb, link).then((resp) => {
       expect(resp).to.be.greaterThanOrEqual(0);
     });
   });
 
   it("Get price of LINK for 100 BNB", async () => {
-    const link = "0x8D908A42FD847c80Eeb4498dE43469882436c8FF";
-    const wbnb = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
+    const link = linkInstance.address;
+    const wbnb = wbnbInstance.address;
     const path = [link, wbnb];
     priceOracle.getPrice("100", path).then((resp) => {
       expect(resp).to.be.greaterThanOrEqual(0);
@@ -125,8 +160,8 @@ describe("Price Oracle", () => {
   });
 
   it("Get pair address of LINK and WBNB", async () => {
-    const link = "0x8D908A42FD847c80Eeb4498dE43469882436c8FF";
-    const wbnb = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
+    const link = linkInstance.address;
+    const wbnb = wbnbInstance.address;
     let pairAdress = "0x0000000000000000000000000000000000000000";
     priceOracle.getPairAddress(link, wbnb).then((resp) => {
       expect(pairAdress).not.to.be.equal(
