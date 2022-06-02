@@ -183,6 +183,29 @@ describe.only("Tests for IndexSwap", () => {
         await indexSwap.rebalance();
       });
 
+      it("should Update Weights and Rebalance", async () => {
+        const {
+          tokenXBalance: beforeTokenXBalance,
+          vaultValue: beforeVaultValue,
+        } = await indexSwap.getTokenAndVaultBalance();
+
+        await indexSwap.updateWeights([1, 2]);
+
+        const {
+          tokenXBalance: afterTokenXBalance,
+          vaultValue: afterVaultValue,
+        } = await indexSwap.getTokenAndVaultBalance();
+
+        console.log({
+          beforeToken0Bal: ethers.utils.formatEther(beforeTokenXBalance[0]),
+          beforeToken1Bal: ethers.utils.formatEther(beforeTokenXBalance[1]),
+          beforeVaultValue: ethers.utils.formatEther(beforeVaultValue),
+          afterToken0Bal: ethers.utils.formatEther(afterTokenXBalance[0]),
+          afterToken1Bal: ethers.utils.formatEther(afterTokenXBalance[1]),
+          afterVaultValue: ethers.utils.formatEther(afterVaultValue),
+        });
+      });
+
       it("when withdraw fund more then balance", async () => {
         const amountIndexToken = await indexSwap.balanceOf(owner.address);
         const updateAmount = parseInt(amountIndexToken.toString()) + 1;

@@ -437,6 +437,24 @@ contract IndexSwap is TokenBase, BMath {
         }
     }
 
+    function updateWeights(uint96[] calldata denorms) public onlyAssetManager {
+        uint256 len = _tokens.length;
+        require(denorms.length == len, "Lengths don't match");
+
+        uint256 totalWeight = 0;
+        for (uint256 i = 0; i < len; i++) {
+            Record storage record = _records[_tokens[i]];
+            record.lastDenormUpdate = uint40(block.timestamp);
+            record.denorm = denorms[i];
+            record.desiredDenorm = denorms[i];
+
+            totalWeight = badd(totalWeight, denorms[i]);
+        }
+        _totalWeight = totalWeight;
+
+        rebalance();
+    }
+
     function getPathForETH(address crypto)
         public
         view
