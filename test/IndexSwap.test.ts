@@ -123,7 +123,7 @@ describe.only("Tests for IndexSwap", () => {
         const indexSupplyBefore = await indexSwap.totalSupply();
         //console.log("0.1 before", indexSupplyBefore);
         await indexSwap.investInFund({
-          value: "100000000000000000",
+          value: ethers.utils.parseEther("0.1"),
         });
         const indexSupplyAfter = await indexSwap.totalSupply();
         //console.log("0.1 after", indexSupplyAfter);
@@ -139,7 +139,7 @@ describe.only("Tests for IndexSwap", () => {
         const indexSupplyBefore = await indexSwap.totalSupply();
         //console.log("0.1 before", indexSupplyBefore);
         await indexSwap.investInFund({
-          value: "100000000000000000",
+          value: ethers.utils.parseEther("0.1"),
         });
         const indexSupplyAfter = await indexSwap.totalSupply();
         const valuesAfter = await indexSwap.getTokenAndVaultBalance();
@@ -151,7 +151,7 @@ describe.only("Tests for IndexSwap", () => {
         const indexSupplyBefore = await indexSwap.totalSupply();
         //console.log("0.2 before", indexSupplyBefore);
         await indexSwap.investInFund({
-          value: "200000000000000000",
+          value: ethers.utils.parseEther("0.2"),
         });
         const indexSupplyAfter = await indexSwap.totalSupply();
         const valuesAfter = await indexSwap.getTokenAndVaultBalance();
@@ -180,7 +180,7 @@ describe.only("Tests for IndexSwap", () => {
       });
 
       it("should Rebalance", async () => {
-        await indexSwap.rebalance([2, 3]);
+        await indexSwap.rebalance();
       });
 
       it("when withdraw fund more then balance", async () => {

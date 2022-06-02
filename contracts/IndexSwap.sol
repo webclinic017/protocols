@@ -189,7 +189,7 @@ contract IndexSwap is TokenBase, BMath {
                 uint256 tokenBalance = token.balanceOf(vault);
                 uint256 priceToken;
                 uint256 tokenBalanceBNB;
-                if (_tokens[i] == pancakeSwapRouter.WETH()) {
+                if (_tokens[i] == getETH()) {
                     tokenBalanceBNB = tokenBalance;
                 } else {
                     uint256 decimal = oracal.getDecimal(_tokens[i]);
@@ -229,7 +229,7 @@ contract IndexSwap is TokenBase, BMath {
         }
 
         // swap tokens from BNB to tokens in portfolio swapResult[1]: swapped token amount
-        uint256 deadline = block.timestamp + 15; // using 'now' for convenience, for mainnet pass deadline from frontend!
+        uint256 deadline = block.timestamp; // using 'now' for convenience, for mainnet pass deadline from frontend!
         for (uint256 i = 0; i < _tokens.length; i++) {
             IERC20Metadata t = IERC20Metadata(_tokens[i]);
             Record memory record = _records[address(t)];
@@ -242,7 +242,7 @@ contract IndexSwap is TokenBase, BMath {
 
             uint256 swapResultBNB;
 
-            if (address(t) == pancakeSwapRouter.WETH()) {
+            if (address(t) == getETH()) {
                 require(address(this).balance >= swapAmount, "not enough bnb");
                 IWETH token = IWETH(address(t));
                 token.deposit{value: swapAmount}();
@@ -301,7 +301,7 @@ contract IndexSwap is TokenBase, BMath {
             "caller is not holding given token amount"
         );
 
-        uint256 deadline = block.timestamp + 15;
+        uint256 deadline = block.timestamp;
         uint256 totalSupplyIndex = totalSupply();
 
         _burn(msg.sender, tokenAmount);
@@ -315,7 +315,7 @@ contract IndexSwap is TokenBase, BMath {
                 totalSupplyIndex
             );
 
-            if (_tokens[i] == pancakeSwapRouter.WETH()) {
+            if (_tokens[i] == getETH()) {
                 TransferHelper.safeTransferFrom(
                     address(t),
                     vault,
@@ -345,12 +345,13 @@ contract IndexSwap is TokenBase, BMath {
         }
     }
 
-    function rebalance(uint256[] memory newWeights) public onlyAssetManager {
+    function rebalance() public onlyAssetManager {
         uint256 sumWeightsToSwap = 0;
         uint256 totalBNBAmount = 0;
         uint256 vaultBalance = 0;
         uint256 len = _tokens.length;
-
+        
+        uint256[] memory newWeights = new uint256[](len);
         uint256[] memory oldWeights = new uint256[](len);
         uint256[] memory tokenBalanceInBNB = new uint256[](len);
 
@@ -362,10 +363,13 @@ contract IndexSwap is TokenBase, BMath {
                 oldWeights[i] = tokenBalanceInBNB[i].mul(10000).div(
                     vaultBalance
                 );
+                newWeights[i] = uint256(_records[_tokens[i]].denorm)
+                    .mul(10000)
+                    .div(_totalWeight);
             }
 
             // sell - swap to BNB
-            uint256 deadline = block.timestamp + 15;
+            uint256 deadline = block.timestamp;
             for (uint256 i = 0; i < _tokens.length; i++) {
                 if (newWeights[i] < oldWeights[i]) {
                     IERC20 token = IERC20(_tokens[i]);
@@ -383,7 +387,7 @@ contract IndexSwap is TokenBase, BMath {
                     );
 
                     uint256 swapResult;
-                    if (_tokens[i] == pancakeSwapRouter.WETH()) {
+                    if (_tokens[i] == getETH()) {
                         IWETH(_tokens[i]).withdraw(_swapAmount);
                         swapResult = _swapAmount;
                     } else {
@@ -420,7 +424,7 @@ contract IndexSwap is TokenBase, BMath {
                     uint256 swapAmount = totalBNBAmount.mul(weightToSwap).div(
                         sumWeightsToSwap
                     );
-                    if (t == pancakeSwapRouter.WETH()) {
+                    if (t == getETH()) {
                         IWETH(t).deposit{value: swapAmount}();
                         TransferHelper.safeTransfer(t, vault, swapAmount);
                     } else {
@@ -439,7 +443,7 @@ contract IndexSwap is TokenBase, BMath {
         returns (address[] memory)
     {
         address[] memory path = new address[](2);
-        path[0] = pancakeSwapRouter.WETH();
+        path[0] = getETH();
         path[1] = crypto;
 
         return path;
@@ -452,7 +456,7 @@ contract IndexSwap is TokenBase, BMath {
     {
         address[] memory path = new address[](2);
         path[0] = token;
-        path[1] = pancakeSwapRouter.WETH();
+        path[1] = getETH();
 
         return path;
     }

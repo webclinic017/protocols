@@ -222,7 +222,7 @@ describe.only("Tests for IndexFactory", () => {
       });
 
       it("should Rebalance", async () => {
-        await indexSwap.rebalance([2, 3]);
+        await indexSwap.rebalance();
       });
 
       it("when withdraw fund more then balance", async () => {
