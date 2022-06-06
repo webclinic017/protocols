@@ -478,9 +478,10 @@ contract IndexSwap is TokenBase, BMath {
         0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47, // ADA
         0x7083609fCE4d1d8Dc0C979AAb8c869Ea2C873402, // DOT
         0x85EAC5Ac2F758618dFa09bDbe0cf174e7d574D5B, // TRX
-        0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82, // CAKE
+        0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82, // CAKE-
         0x8fF795a6F4D97E7887C79beA79aba5cc76444aDf, // BCH
         0x0D8Ce2A99Bb6e3B7Db580eD848240e4a0F9aE153 // FIL
+        //0xcF6BB5389c92Bdda8a3747Ddb454cB7a64626C63 // XVS
 
         // 0xbA2aE424d960c26247Dd6c32edC70B295c744C43 // DOGE --works for investing but amount redeem vtoken exceeds balance (check decimals)
 
@@ -750,7 +751,7 @@ contract IndexSwap is TokenBase, BMath {
         address _underlyingAsset,
         address _vAsset,
         uint256 _amount
-    ) public {
+    ) internal {
         IERC20 underlyingToken = IERC20(_underlyingAsset);
         VBep20Interface vToken = VBep20Interface(_vAsset);
 
@@ -764,7 +765,7 @@ contract IndexSwap is TokenBase, BMath {
         address _underlyingAsset,
         address _vAsset,
         uint256 _amount
-    ) public {
+    ) internal {
         IERC20 underlyingToken = IERC20(_underlyingAsset);
         IVBNB vToken = IVBNB(_vAsset);
 
@@ -778,7 +779,7 @@ contract IndexSwap is TokenBase, BMath {
         address _underlyingAsset,
         address _vAsset,
         uint256 _amount
-    ) public {
+    ) internal {
         IERC20 underlyingToken = IERC20(_underlyingAsset);
         VBep20Interface vToken = VBep20Interface(_vAsset);
 
@@ -790,7 +791,7 @@ contract IndexSwap is TokenBase, BMath {
         underlyingToken.transfer(vault, _amount);
     }
 
-    function redeemBNB(address _vAsset, uint256 _amount) public {
+    function redeemBNB(address _vAsset, uint256 _amount) internal {
         IVBNB vToken = IVBNB(_vAsset);
 
         require(
@@ -836,10 +837,6 @@ contract IndexSwap is TokenBase, BMath {
                 // put swapresult into venus protocol
                 lendBNB(_tokens[i], vAsset[i], swapAmount);
 
-                /*IWETH token = IWETH(_tokens[i]);
-                token.deposit{value: swapAmount}();
-                token.transfer(vault, swapAmount);*/
-
                 swapResultBNB = swapAmount;
                 investedAmountAfterSlippage = investedAmountAfterSlippage.add(
                     swapAmount
@@ -861,10 +858,10 @@ contract IndexSwap is TokenBase, BMath {
                 lendToken(_tokens[i], vAsset[i], swapResult[1]);
             }
         }
-        require(
+        /*require(
             investedAmountAfterSlippage <= tokenAmount,
             "amount after slippage can't be greater than before"
-        );
+        );*/
         // calculates the index token amount to mint invested amount after slippage is considered to make sure the index token amount represents the invested amount after slippage
         if (totalSupply() > 0) {
             tokenAmount = mintShareAmount(
@@ -963,36 +960,52 @@ contract IndexSwap is TokenBase, BMath {
             uint256 deadline = block.timestamp + 15;
             for (uint256 i = 0; i < _tokens.length; i++) {
                 if (newWeights[i] < oldWeights[i]) {
-                    IERC20 token = IERC20(_tokens[i]);
-                    uint256 tokenBalance;
-                    tokenBalance = token.balanceOf(vault);
                     uint256 weightDiff = oldWeights[i].sub(newWeights[i]);
-                    uint256 _swapAmount = tokenBalance.mul(weightDiff).div(
+
+                    uint256 tokenBalance;
+                    if (_tokens[i] != pancakeSwapRouter.WETH()) {
+                        VBep20Interface token = VBep20Interface(vAsset[i]);
+                        tokenBalance = token.balanceOf(vault);
+                    } else {
+                        IVBNB token = IVBNB(vAsset[i]);
+                        tokenBalance = token.balanceOf(vault);
+                    }
+
+                    // balance of vtoken
+                    uint256 amount = tokenBalance.mul(weightDiff).div(
                         oldWeights[i]
                     );
 
+                    // transfer vToken from gnosis safe to this contract
                     gnosisSafe.executeTransactionOther(
                         address(this),
-                        _swapAmount,
-                        _tokens[i]
+                        amount,
+                        address(vAsset[i])
                     );
+
                     if (_tokens[i] != pancakeSwapRouter.WETH()) {
-                        TransferHelper.safeApprove(
-                            _tokens[i],
-                            address(pancakeSwapRouter),
-                            _swapAmount
+                        // take tokens out of venus
+                        redeemTokens(_tokens[i], vAsset[i], amount);
+
+                        IERC20 underlyingToken = IERC20(_tokens[i]);
+                        uint256 outAmount = underlyingToken.balanceOf(
+                            address(this)
                         );
-                        uint256[] memory swapResult;
-                        swapResult = pancakeSwapRouter.swapExactTokensForETH(
-                            _swapAmount,
+
+                        TransferHelper.safeApprove(
+                            address(_tokens[i]),
+                            address(pancakeSwapRouter),
+                            outAmount
+                        );
+                        pancakeSwapRouter.swapExactTokensForETH(
+                            outAmount,
                             0,
                             getPathForToken(_tokens[i]),
                             address(this),
                             deadline
                         );
-                        totalBNBAmount.add(swapResult[1]);
                     } else {
-                        totalBNBAmount.add(_swapAmount);
+                        redeemBNB(vAsset[i], amount);
                     }
                 } else if (newWeights[i] > oldWeights[i]) {
                     uint256 diff = newWeights[i].sub(oldWeights[i]);
@@ -1012,13 +1025,15 @@ contract IndexSwap is TokenBase, BMath {
                         sumWeightsToSwap
                     );
                     if (t == pancakeSwapRouter.WETH()) {
-                        IWETH token = IWETH(t);
-                        token.deposit{value: swapAmount}();
-                        token.transfer(vault, swapAmount);
+                        lendBNB(_tokens[i], vAsset[i], swapAmount);
                     } else {
-                        pancakeSwapRouter.swapExactETHForTokens{
+                        uint256[] memory swapResult;
+                        swapResult = pancakeSwapRouter.swapExactETHForTokens{
                             value: swapAmount
-                        }(0, getPathForETH(t), vault, deadline);
+                        }(0, getPathForETH(t), address(this), deadline);
+
+                        // put swapresult into venus protocol
+                        lendToken(_tokens[i], vAsset[i], swapResult[1]);
                     }
                 }
             }
