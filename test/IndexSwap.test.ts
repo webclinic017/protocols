@@ -206,6 +206,35 @@ describe.only("Tests for IndexSwap", () => {
         });
       });
 
+      it("should update tokens", async () => {
+        // current = BUSD:ETH = 1:2
+        // target = ETH:DAI = 1:3
+
+        const {
+          tokenXBalance: beforeTokenXBalance,
+          vaultValue: beforeVaultValue,
+        } = await indexSwap.getTokenAndVaultBalance();
+
+        await indexSwap.updateTokens(
+          [ethInstance.address, daiInstance.address],
+          [1, 3]
+        );
+
+        const {
+          tokenXBalance: afterTokenXBalance,
+          vaultValue: afterVaultValue,
+        } = await indexSwap.getTokenAndVaultBalance();
+
+        console.log({
+          beforeBUSDBal: ethers.utils.formatEther(beforeTokenXBalance[0]),
+          beforeETHBal: ethers.utils.formatEther(beforeTokenXBalance[1]),
+          beforeVaultValue: ethers.utils.formatEther(beforeVaultValue),
+          afterETHBal: ethers.utils.formatEther(afterTokenXBalance[0]),
+          afterDAIBal: ethers.utils.formatEther(afterTokenXBalance[1]),
+          afterVaultValue: ethers.utils.formatEther(afterVaultValue),
+        });
+      });
+
       it("when withdraw fund more then balance", async () => {
         const amountIndexToken = await indexSwap.balanceOf(owner.address);
         const updateAmount = parseInt(amountIndexToken.toString()) + 1;
@@ -216,7 +245,7 @@ describe.only("Tests for IndexSwap", () => {
         ).to.be.revertedWith("caller is not holding given token amount");
       });
 
-      it("should withdraw fund and burn index token successfully", async () => {
+      it.skip("should withdraw fund and burn index token successfully", async () => {
         const amountIndexToken = await indexSwap.balanceOf(owner.address);
         //console.log(amountIndexToken, "amountIndexToken");
         const AMOUNT = ethers.BigNumber.from(amountIndexToken); //1BNB

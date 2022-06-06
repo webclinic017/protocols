@@ -12,7 +12,7 @@ import { chainIdToAddresses } from "../scripts/networkVariables";
 //use default BigNumber
 // chai.use(require("chai-bignumber")());
 
-describe.only("Tests for IndexFactory", () => {
+describe.skip("Tests for IndexFactory", () => {
   let accounts;
   let priceOracle: PriceOracle;
   let indexSwap: IndexSwap;

@@ -347,10 +347,9 @@ contract IndexSwap is TokenBase, BMath {
 
     function rebalance() public onlyAssetManager {
         uint256 sumWeightsToSwap = 0;
-        uint256 totalBNBAmount = 0;
         uint256 vaultBalance = 0;
         uint256 len = _tokens.length;
-        
+
         uint256[] memory newWeights = new uint256[](len);
         uint256[] memory oldWeights = new uint256[](len);
         uint256[] memory tokenBalanceInBNB = new uint256[](len);
@@ -404,17 +403,14 @@ contract IndexSwap is TokenBase, BMath {
                             deadline
                         )[1];
                     }
-
-                    totalBNBAmount.add(swapResult);
                 } else if (newWeights[i] > oldWeights[i]) {
                     uint256 diff = newWeights[i].sub(oldWeights[i]);
                     sumWeightsToSwap = sumWeightsToSwap.add(diff);
                 }
-                _records[_tokens[i]].denorm = uint96(newWeights[i]);
             }
 
             // buy - swap from BNB to token
-            totalBNBAmount = address(this).balance;
+            uint256 totalBNBAmount = address(this).balance;
             for (uint256 i = 0; i < len; i++) {
                 address t = _tokens[i];
                 if (newWeights[i] > oldWeights[i]) {
@@ -453,6 +449,151 @@ contract IndexSwap is TokenBase, BMath {
         _totalWeight = totalWeight;
 
         rebalance();
+    }
+
+    function updateTokens(address[] memory tokens, uint96[] memory denorms)
+        public
+        onlyAssetManager
+    {
+        uint256 len = tokens.length;
+        uint256 totalWeight = 0;
+
+        for (uint256 i = 0; i < len; i++) {
+            totalWeight = badd(totalWeight, denorms[i]);
+        }
+
+        if (totalSupply() > 0) {
+            uint256[] memory newDenorms = new uint256[](_tokens.length);
+            bool[] memory isTokenCommon = new bool[](len);
+            for (uint256 i = 0; i < _tokens.length; i++) {
+                for (uint256 j = 0; j < len; j++) {
+                    if (_tokens[i] == tokens[j]) {
+                        newDenorms[i] = denorms[j];
+                        isTokenCommon[j] = true;
+                        break;
+                    }
+                }
+            }
+
+            uint256 sumWeightsToSwap = 0;
+            uint256 totalBNBAmount = 0;
+            // sell - swap to BNB
+            for (uint256 i = 0; i < _tokens.length; i++) {
+                uint256 adjustedOldWeight = uint256(_records[_tokens[i]].denorm)
+                    .mul(totalWeight);
+                uint256 adjustedNewWeight = newDenorms[i].mul(_totalWeight);
+
+                if (adjustedNewWeight < adjustedOldWeight) {
+                    uint256 tokenBalance = IERC20(_tokens[i]).balanceOf(vault);
+                    uint256 weightDiff = adjustedOldWeight.sub(
+                        adjustedNewWeight
+                    );
+                    uint256 _swapAmount = tokenBalance.mul(weightDiff).div(
+                        adjustedOldWeight
+                    );
+
+                    TransferHelper.safeTransferFrom(
+                        _tokens[i],
+                        vault,
+                        address(this),
+                        _swapAmount
+                    );
+
+                    uint256 swapResult;
+                    if (_tokens[i] == getETH()) {
+                        IWETH(_tokens[i]).withdraw(_swapAmount);
+                        swapResult = _swapAmount;
+                    } else {
+                        TransferHelper.safeApprove(
+                            _tokens[i],
+                            address(pancakeSwapRouter),
+                            _swapAmount
+                        );
+                        swapResult = pancakeSwapRouter.swapExactTokensForETH(
+                            _swapAmount,
+                            0,
+                            getPathForToken(_tokens[i]),
+                            address(this),
+                            block.timestamp
+                        )[1];
+                    }
+
+                    totalBNBAmount = totalBNBAmount.add(swapResult);
+                } else if (adjustedNewWeight > adjustedOldWeight) {
+                    // add to weight diff to buy later
+                    uint256 diff = adjustedNewWeight.sub(adjustedOldWeight);
+                    sumWeightsToSwap = sumWeightsToSwap.add(diff);
+                }
+
+                if (newDenorms[i] == 0) {
+                    delete _records[_tokens[i]];
+                }
+            }
+
+            // buy - swap from BNB to token
+            for (uint256 i = 0; i < len; i++) {
+                uint256 adjustedOldWeight = 0;
+                if (isTokenCommon[i]) {
+                    adjustedOldWeight = uint256(_records[tokens[i]].denorm).mul(
+                            totalWeight
+                        );
+                }
+
+                uint256 adjustedNewWeight = uint256(denorms[i]).mul(
+                    _totalWeight
+                );
+                if (adjustedNewWeight > adjustedOldWeight) {
+                    uint256 weightToSwap = adjustedNewWeight.sub(
+                        adjustedOldWeight
+                    );
+                    sumWeightsToSwap = sumWeightsToSwap.add(weightToSwap);
+                }
+            }
+            for (uint256 i = 0; i < len; i++) {
+                uint256 adjustedOldWeight = 0;
+                if (isTokenCommon[i]) {
+                    adjustedOldWeight = uint256(_records[tokens[i]].denorm).mul(
+                            totalWeight
+                        );
+                }
+
+                uint256 adjustedNewWeight = uint256(denorms[i]).mul(
+                    _totalWeight
+                );
+                if (adjustedNewWeight > adjustedOldWeight) {
+                    uint256 weightToSwap = adjustedNewWeight.sub(
+                        adjustedOldWeight
+                    );
+                    require(weightToSwap > 0, "weight not greater than 0");
+                    require(sumWeightsToSwap > 0, "div by 0, sumweight");
+                    uint256 swapAmount = totalBNBAmount.mul(weightToSwap).div(
+                        sumWeightsToSwap
+                    );
+
+                    address t = tokens[i];
+                    if (t == getETH()) {
+                        IWETH(t).deposit{value: swapAmount}();
+                        TransferHelper.safeTransfer(t, vault, swapAmount);
+                    } else {
+                        pancakeSwapRouter.swapExactETHForTokens{
+                            value: swapAmount
+                        }(0, getPathForETH(t), vault, block.timestamp);
+                    }
+                }
+
+                _records[tokens[i]] = Record({
+                    ready: true,
+                    lastDenormUpdate: uint40(block.timestamp),
+                    denorm: denorms[i],
+                    desiredDenorm: denorms[i],
+                    index: uint8(i),
+                    balance: 0
+                });
+            }
+        }
+
+        _totalWeight = totalWeight;
+        _tokens = tokens;
     }
 
     function getPathForETH(address crypto)
