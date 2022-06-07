@@ -244,8 +244,8 @@ describe.only("Tests for IndexSwap", () => {
           indexSwap.connect(nonOwner).withdrawFund(AMOUNT)
         ).to.be.revertedWith("caller is not holding given token amount");
       });
-
-      it.skip("should withdraw fund and burn index token successfully", async () => {
+      // it.skip
+      it("should withdraw fund and burn index token successfully", async () => {
         const amountIndexToken = await indexSwap.balanceOf(owner.address);
         //console.log(amountIndexToken, "amountIndexToken");
         const AMOUNT = ethers.BigNumber.from(amountIndexToken); //1BNB
