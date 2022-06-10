@@ -100,7 +100,10 @@ describe.only("Tests for IndexSwap", () => {
       it("Initialize IndexFund Tokens", async () => {
         await indexSwap
           .connect(owner)
-          .initialize([busdInstance.address, ethInstance.address], [1, 1]);
+          .initialize(
+            [busdInstance.address, ethInstance.address],
+            [5000, 5000]
+          );
       });
 
       it("Update rate to 1,1", async () => {
@@ -189,7 +192,7 @@ describe.only("Tests for IndexSwap", () => {
           vaultValue: beforeVaultValue,
         } = await indexSwap.getTokenAndVaultBalance();
 
-        await indexSwap.updateWeights([1, 2]);
+        await indexSwap.updateWeights([3333, 6667]);
 
         const {
           tokenXBalance: afterTokenXBalance,
@@ -208,7 +211,7 @@ describe.only("Tests for IndexSwap", () => {
 
       it("should update tokens", async () => {
         // current = BUSD:ETH = 1:2
-        // target = ETH:DAI = 1:3
+        // target = ETH:DAI:WBNB = 1:3:1
 
         const {
           tokenXBalance: beforeTokenXBalance,
@@ -216,8 +219,8 @@ describe.only("Tests for IndexSwap", () => {
         } = await indexSwap.getTokenAndVaultBalance();
 
         await indexSwap.updateTokens(
-          [ethInstance.address, daiInstance.address],
-          [1, 3]
+          [ethInstance.address, daiInstance.address, wbnbInstance.address],
+          [2000, 6000, 2000]
         );
 
         const {
@@ -231,6 +234,7 @@ describe.only("Tests for IndexSwap", () => {
           beforeVaultValue: ethers.utils.formatEther(beforeVaultValue),
           afterETHBal: ethers.utils.formatEther(afterTokenXBalance[0]),
           afterDAIBal: ethers.utils.formatEther(afterTokenXBalance[1]),
+          afterWBNBBal: ethers.utils.formatEther(afterTokenXBalance[2]),
           afterVaultValue: ethers.utils.formatEther(afterVaultValue),
         });
       });
@@ -245,7 +249,7 @@ describe.only("Tests for IndexSwap", () => {
         ).to.be.revertedWith("caller is not holding given token amount");
       });
 
-      it.skip("should withdraw fund and burn index token successfully", async () => {
+      it("should withdraw fund and burn index token successfully", async () => {
         const amountIndexToken = await indexSwap.balanceOf(owner.address);
         //console.log(amountIndexToken, "amountIndexToken");
         const AMOUNT = ethers.BigNumber.from(amountIndexToken); //1BNB
