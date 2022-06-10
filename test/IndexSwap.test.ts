@@ -248,7 +248,6 @@ describe.only("Tests for IndexSwap", () => {
           indexSwap.connect(nonOwner).withdrawFund(AMOUNT)
         ).to.be.revertedWith("caller is not holding given token amount");
       });
-
       it("should withdraw fund and burn index token successfully", async () => {
         const amountIndexToken = await indexSwap.balanceOf(owner.address);
         //console.log(amountIndexToken, "amountIndexToken");
