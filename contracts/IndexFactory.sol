@@ -6,23 +6,23 @@ import "./IndexSwap.sol";
 contract IndexFactory {
     event IndexCreation(
         IndexSwap index,
-        address _oracal,
+        address _oracle,
         address _outAssest,
         address _pancakeSwapAddress,
         address _vault
     );
 
     function createIndex(
-        address _oracal,
+        address _oracle,
         address _outAssest,
         address _pancakeSwapAddress,
         address _vault
     ) public returns (IndexSwap index) {
-        index = new IndexSwap(_oracal, _outAssest, _pancakeSwapAddress, _vault);
+        index = new IndexSwap(_oracle, _outAssest, _pancakeSwapAddress, _vault);
 
         emit IndexCreation(
             index,
-            _oracal,
+            _oracle,
             _outAssest,
             _pancakeSwapAddress,
             _vault

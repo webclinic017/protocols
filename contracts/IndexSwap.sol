@@ -69,18 +69,18 @@ contract IndexSwap is TokenBase, BMath {
 
     rate public currentRate;
 
-    IPriceOracle oracal;
+    IPriceOracle oracle;
 
     address outAssest;
 
     constructor(
-        address _oracal,
+        address _oracle,
         address _outAssest,
         address _pancakeSwapAddress,
         address _vault
     ) {
         pancakeSwapRouter = IUniswapV2Router02(_pancakeSwapAddress);
-        oracal = IPriceOracle(_oracal);
+        oracle = IPriceOracle(_oracle);
         vault = _vault;
         outAssest = _outAssest; //As now we are tacking busd
         assetManagers[msg.sender] = true;
@@ -128,7 +128,7 @@ contract IndexSwap is TokenBase, BMath {
                 balance: 0
             });
             _tokens.push(tokens[i]);
-            uint256 priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
+            uint256 priceToken = oracle.getTokenPrice(_tokens[i], outAssest);
 
             sumPrice = sumPrice.add(priceToken);
             totalWeight = badd(totalWeight, denorms[i]);
@@ -193,8 +193,8 @@ contract IndexSwap is TokenBase, BMath {
                 if (_tokens[i] == getETH()) {
                     tokenBalanceBNB = tokenBalance;
                 } else {
-                    uint256 decimal = oracal.getDecimal(_tokens[i]);
-                    priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
+                    uint256 decimal = oracle.getDecimal(_tokens[i]);
+                    priceToken = oracle.getTokenPrice(_tokens[i], outAssest);
                     tokenBalanceBNB = priceToken.mul(tokenBalance).div(
                         10**decimal
                     );
@@ -259,7 +259,7 @@ contract IndexSwap is TokenBase, BMath {
                 }(0, getPathForETH(address(t)), vault, deadline);
 
                 // take the amount actually being swapped and convert it to BNB for calculation of the index token amount to mint
-                swapResultBNB = oracal.getTokenPrice(_tokens[i], outAssest);
+                swapResultBNB = oracle.getTokenPrice(_tokens[i], outAssest);
                 uint256 decimal = t.decimals();
                 investedAmountAfterSlippage = investedAmountAfterSlippage.add(
                     swapResultBNB.mul(swapResult[1]).div(10**decimal)
@@ -270,7 +270,7 @@ contract IndexSwap is TokenBase, BMath {
                 take the amount actually being swapped and convert it to BNB
                 for calculation of the index token amount to mint
             */
-            // uint256 swapResultBNB = oracal.getTokenPrice(_tokens[i], outAssest);
+            // uint256 swapResultBNB = oracle.getTokenPrice(_tokens[i], outAssest);
         }
         require(
             investedAmountAfterSlippage <= tokenAmount,

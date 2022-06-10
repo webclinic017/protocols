@@ -10,13 +10,13 @@ contract DeployIndex {
     IndexSwap public index;
 
     function createNewIndex(
-        address _oracal,
+        address _oracle,
         address _outAssest,
         address _pancakeSwapAddress,
         address _vault
     ) public {
         index = indexFactory.createIndex(
-            _oracal,
+            _oracle,
             _outAssest,
             _pancakeSwapAddress,
             _vault
