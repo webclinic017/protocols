@@ -145,22 +145,6 @@ describe.skip("Tests for IndexFactory", () => {
           .initialize([busdInstance.address, ethInstance.address], [1, 1]);
       });
 
-      it("Update rate to 1,1", async () => {
-        const numerator = 1;
-        const denominator = 1;
-        await indexSwap.updateRate(numerator, denominator);
-        const currentRate = await indexSwap.currentRate();
-
-        expect(currentRate.numerator).to.be.equal(numerator);
-        expect(currentRate.denominator).to.be.equal(denominator);
-      });
-
-      it("Test amount and vault values", async () => {
-        const values = await indexSwap.getTokenAndVaultBalance();
-        //console.log("tokenBalances", values[0]);
-        //console.log("vault", values[1]);
-      });
-
       it("Invest 0.1BNB into Top10 fund", async () => {
         const indexSupplyBefore = await indexSwap.totalSupply();
         //console.log("0.1 before", indexSupplyBefore);
@@ -169,12 +153,6 @@ describe.skip("Tests for IndexFactory", () => {
         });
         const indexSupplyAfter = await indexSwap.totalSupply();
         //console.log("0.1 after", indexSupplyAfter);
-      });
-
-      it("Test amount and vault values", async () => {
-        const values = await indexSwap.getTokenAndVaultBalance();
-        //console.log("tokenBalances", values[0]);
-        //console.log("vault", values[1]);
       });
 
       it("Invest 0.1BNB into Top10 fund", async () => {
@@ -209,16 +187,6 @@ describe.skip("Tests for IndexFactory", () => {
         const values = await indexSwap.getTokenAndVaultBalance();
         //console.log("tokenBalances", values[0]);
         //console.log("vault", values[1]);
-      });
-
-      it("Update rate to 2,2", async () => {
-        const numerator = 2;
-        const denominator = 2;
-        await indexSwap.updateRate(numerator, denominator);
-        const currentRate = await indexSwap.currentRate();
-
-        expect(currentRate.numerator).to.be.equal(numerator);
-        expect(currentRate.denominator).to.be.equal(denominator);
       });
 
       it("should Rebalance", async () => {
