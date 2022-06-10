@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.4 || ^0.7.6 || ^0.8.0;
 
 import "./interfaces/IUniswapV2Router02.sol";
@@ -12,18 +13,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IPriceOracle.sol";
 import "./MyModule.sol";
 import "./interfaces/IWETH.sol";
-
-// // SPDX-License-Identifier: MIT
-// pragma solidity <=0.7.6;
-
-/************************************************************************************************
-Originally from https://github.com/balancer-labs/balancer-core/blob/master/contracts/BConst.sol
-
-This source code has been modified from the original, which was copied from the github repository
-at commit hash f4ed5d65362a8d6cec21662fb6eae233b0babc1f.
-
-Subject to the GPL-3.0 license
-*************************************************************************************************/
 
 contract BConst {
     uint256 public constant VERSION_NUMBER = 1;
@@ -73,15 +62,6 @@ contract BConst {
     // Maximum ratio of output tokens to balance for swaps.
     uint256 internal constant MAX_OUT_RATIO = (BONE / 3) + 1 wei;
 }
-
-/************************************************************************************************
-Originally from https://github.com/balancer-labs/balancer-core/blob/master/contracts/BNum.sol
-
-This source code has been modified from the original, which was copied from the github repository
-at commit hash f4ed5d65362a8d6cec21662fb6eae233b0babc1f.
-
-Subject to the GPL-3.0 license
-*************************************************************************************************/
 
 contract BNum is BConst {
     function btoi(uint256 a) internal pure returns (uint256) {
@@ -488,7 +468,32 @@ contract IndexSwap is TokenBase, BMath {
     address private vault;
     MyModule gnosisSafe;
 
-    address[10] tokenDefault = [
+    address[5] tokenDefault = [
+        0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c, // BTC
+        0x2170Ed0880ac9A755fd29B2688956BD959F933F8, // ETH
+        0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE, // XRP
+        0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47, // ADA
+        0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c // WBNB
+
+        /*
+        working addresses blue chip
+
+        0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c, // BTC
+        0x2170Ed0880ac9A755fd29B2688956BD959F933F8, // ETH
+        0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE, // XRP
+        0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47 // ADA
+        0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c // WBNB
+
+
+        working addresses for META
+
+        0x26433c8127d9b4e9B71Eaa15111DF99Ea2EeB2f8, // MANA
+        0x67b725d7e342d7B611fa85e859Df9697D9378B2e, // SAND
+        0x715D400F88C167884bbCc41C5FeA407ed4D2f8A0 // AXS
+
+
+        working addresses for TOP10
+
         0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c, // BTC
         0x2170Ed0880ac9A755fd29B2688956BD959F933F8, // ETH
         0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE, // XRP
@@ -499,39 +504,10 @@ contract IndexSwap is TokenBase, BMath {
         0xbA2aE424d960c26247Dd6c32edC70B295c744C43, // DOGE
         0x570A5D26f7765Ecb712C0924E4De545B89fD43dF, // SOL
         0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c // WBNB
-
-        /*
-        working addresses blue chip
-
-        0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c, // BTC
-        0x2170Ed0880ac9A755fd29B2688956BD959F933F8, // ETH
-        0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE, // XRP
-        0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47 // ADA
-
-
-        working addresses for META
-
-        0x26433c8127d9b4e9B71Eaa15111DF99Ea2EeB2f8, // MANA
-        0x67b725d7e342d7B611fa85e859Df9697D9378B2e, // SAND
-        0x715D400F88C167884bbCc41C5FeA407ed4D2f8A0 // AXS
-
-
-        working addresses for TOP7
-
-        0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c, // BTC
-        0x2170Ed0880ac9A755fd29B2688956BD959F933F8, // ETH
-        0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE, // XRP
-        0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47, // ADA
-        0x1CE0c2827e2eF14D5C4f29a091d735A204794041, // AVAX
-        0x7083609fCE4d1d8Dc0C979AAb8c869Ea2C873402, // DOT
-        0x85EAC5Ac2F758618dFa09bDbe0cf174e7d574D5B, // TRX
-        0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c, // WBNB
-        0xbA2aE424d960c26247Dd6c32edC70B295c744C43, // DOGE
-        0x570A5D26f7765Ecb712C0924E4De545B89fD43dF // SOL
         */
     ];
 
-    uint96[10] denormsDefult = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+    uint96[5] denormsDefult = [1, 1, 1, 1, 1];
 
     struct rate {
         uint256 numerator;
@@ -558,6 +534,9 @@ contract IndexSwap is TokenBase, BMath {
     }
     // Array of underlying tokens in the pool.
     address[] internal _tokens;
+
+    // Array of vTokens
+    address[] internal vAsset;
 
     // Internal records of the pool's underlying tokens
     mapping(address => Record) internal _records;
@@ -624,6 +603,7 @@ contract IndexSwap is TokenBase, BMath {
         require(_tokens.length == 0, "INITIALIZED");
         uint256 len = tokens.length;
         uint256 totalWeight = 0;
+        uint256 sumPrice = 0;
         for (uint256 i = 0; i < len; i++) {
             _records[tokens[i]] = Record({
                 ready: true,
@@ -634,15 +614,18 @@ contract IndexSwap is TokenBase, BMath {
                 balance: 0
             });
             _tokens.push(tokens[i]);
+            uint256 priceToken = oracal.getTokenPrice(_tokens[i], outAssest);
+
+            sumPrice = sumPrice.add(priceToken);
             totalWeight = badd(totalWeight, denorms[i]);
         }
         _totalWeight = totalWeight;
+        indexDivisor = sumPrice.div(len);
         _publicSwap = true;
-        indexDivisor = 1;
         emit LOG_PUBLIC_SWAP_ENABLED();
     }
 
-    function initializeDefult() external onlyOwner {
+    function initializeDefault() external onlyOwner {
         uint256 len = tokenDefault.length;
         uint256 totalWeight = 0;
         uint256 sumPrice = 0;
@@ -842,11 +825,6 @@ contract IndexSwap is TokenBase, BMath {
             );
 
             if (t != pancakeSwapRouter.WETH()) {
-                gnosisSafe.executeTransactionOther(
-                    address(this),
-                    amount,
-                    address(t)
-                );
                 TransferHelper.safeApprove(
                     address(t),
                     address(pancakeSwapRouter),
@@ -859,6 +837,10 @@ contract IndexSwap is TokenBase, BMath {
                     msg.sender,
                     deadline
                 );
+            } else {
+                IWETH WBNBToken = IWETH(t);
+                WBNBToken.withdraw(amount);
+                payable(msg.sender).transfer(amount);
             }
         }
     }
