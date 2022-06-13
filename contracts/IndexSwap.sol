@@ -30,28 +30,16 @@ contract IndexSwap is TokenBase, BMath {
 
     address private vault;
 
-    struct rate {
-        uint256 numerator;
-        uint256 denominator;
-    }
-
     /**
      * @dev Token record data structure
-     * @param bound is token bound to pool
-     * @param ready has token been initialized
      * @param lastDenormUpdate timestamp of last denorm change
      * @param denorm denormalized weight
-     * @param desiredDenorm desired denormalized weight (used for incremental changes)
      * @param index index of address in tokens array
-     * @param balance token balance
      */
     struct Record {
-        bool ready;
         uint40 lastDenormUpdate;
         uint96 denorm;
-        uint96 desiredDenorm;
         uint8 index;
-        uint256 balance;
     }
     // Array of underlying tokens in the pool.
     address[] internal _tokens;
@@ -119,12 +107,9 @@ contract IndexSwap is TokenBase, BMath {
         uint256 sumPrice = 0;
         for (uint256 i = 0; i < len; i++) {
             _records[tokens[i]] = Record({
-                ready: true,
                 lastDenormUpdate: uint40(block.timestamp),
                 denorm: denorms[i],
-                desiredDenorm: denorms[i],
-                index: uint8(i),
-                balance: 0
+                index: uint8(i)
             });
             _tokens.push(tokens[i]);
             uint256 priceToken = oracle.getTokenPrice(_tokens[i], outAssest);
@@ -353,7 +338,6 @@ contract IndexSwap is TokenBase, BMath {
             Record storage record = _records[_tokens[i]];
             record.lastDenormUpdate = uint40(block.timestamp);
             record.denorm = denorms[i];
-            record.desiredDenorm = denorms[i];
 
             totalWeight = badd(totalWeight, denorms[i]);
         }
@@ -401,12 +385,9 @@ contract IndexSwap is TokenBase, BMath {
         }
         for (uint256 i = 0; i < len; i++) {
             _records[tokens[i]] = Record({
-                ready: true,
                 lastDenormUpdate: uint40(block.timestamp),
                 denorm: denorms[i],
-                desiredDenorm: denorms[i],
-                index: uint8(i),
-                balance: 0
+                index: uint8(i)
             });
         }
 
