@@ -167,17 +167,34 @@ describe.only("Tests for IndexSwap", () => {
 
         const {
           tokenXBalance: afterTokenXBalance,
-          vaultValue: afterVaultValue,
+          vaultValue: afterVaultValueBN,
         } = await indexSwap.getTokenAndVaultBalance();
 
-        console.log({
-          beforeToken0Bal: ethers.utils.formatEther(beforeTokenXBalance[0]),
-          beforeToken1Bal: ethers.utils.formatEther(beforeTokenXBalance[1]),
-          beforeVaultValue: ethers.utils.formatEther(beforeVaultValue),
-          afterToken0Bal: ethers.utils.formatEther(afterTokenXBalance[0]),
-          afterToken1Bal: ethers.utils.formatEther(afterTokenXBalance[1]),
-          afterVaultValue: ethers.utils.formatEther(afterVaultValue),
-        });
+        // console.log({
+        //   beforeToken0Bal: ethers.utils.formatEther(beforeTokenXBalance[0]),
+        //   beforeToken1Bal: ethers.utils.formatEther(beforeTokenXBalance[1]),
+        //   beforeVaultValue: ethers.utils.formatEther(beforeVaultValue),
+        //   afterToken0Bal: ethers.utils.formatEther(afterTokenXBalance[0]),
+        //   afterToken1Bal: ethers.utils.formatEther(afterTokenXBalance[1]),
+        //   afterVaultValue: ethers.utils.formatEther(afterVaultValueBN),
+        // });
+
+        const afterToken0Bal = Number(
+          ethers.utils.formatEther(afterTokenXBalance[0])
+        );
+        const afterToken1Bal = Number(
+          ethers.utils.formatEther(afterTokenXBalance[1])
+        );
+        const afterVaultValue = Number(
+          ethers.utils.formatEther(afterVaultValueBN)
+        );
+
+        expect(Math.ceil((afterToken0Bal * 10) / afterVaultValue)).to.be.gte(
+          (3333 * 10) / 10000
+        );
+        expect(Math.ceil((afterToken1Bal * 10) / afterVaultValue)).to.be.gte(
+          (6667 * 10) / 10000
+        );
       });
 
       it("updateTokens should revert if total Weights not equal 10,000", async () => {
@@ -204,18 +221,40 @@ describe.only("Tests for IndexSwap", () => {
 
         const {
           tokenXBalance: afterTokenXBalance,
-          vaultValue: afterVaultValue,
+          vaultValue: afterVaultValueBN,
         } = await indexSwap.getTokenAndVaultBalance();
 
-        console.log({
-          beforeBUSDBal: ethers.utils.formatEther(beforeTokenXBalance[0]),
-          beforeETHBal: ethers.utils.formatEther(beforeTokenXBalance[1]),
-          beforeVaultValue: ethers.utils.formatEther(beforeVaultValue),
-          afterETHBal: ethers.utils.formatEther(afterTokenXBalance[0]),
-          afterDAIBal: ethers.utils.formatEther(afterTokenXBalance[1]),
-          afterWBNBBal: ethers.utils.formatEther(afterTokenXBalance[2]),
-          afterVaultValue: ethers.utils.formatEther(afterVaultValue),
-        });
+        // console.log({
+        //   beforeBUSDBal: ethers.utils.formatEther(beforeTokenXBalance[0]),
+        //   beforeETHBal: ethers.utils.formatEther(beforeTokenXBalance[1]),
+        //   beforeVaultValue: ethers.utils.formatEther(beforeVaultValue),
+        //   afterETHBal: ethers.utils.formatEther(afterTokenXBalance[0]),
+        //   afterDAIBal: ethers.utils.formatEther(afterTokenXBalance[1]),
+        //   afterWBNBBal: ethers.utils.formatEther(afterTokenXBalance[2]),
+        //   afterVaultValue: ethers.utils.formatEther(afterVaultValue),
+        // });
+        const afterETHBal = Number(
+          ethers.utils.formatEther(afterTokenXBalance[0])
+        );
+        const afterDAIBal = Number(
+          ethers.utils.formatEther(afterTokenXBalance[1])
+        );
+        const afterWBNBBal = Number(
+          ethers.utils.formatEther(afterTokenXBalance[2])
+        );
+        const afterVaultValue = Number(
+          ethers.utils.formatEther(afterVaultValueBN)
+        );
+
+        expect(Math.ceil((afterETHBal * 10) / afterVaultValue)).to.be.gte(
+          (2000 * 10) / 10000
+        );
+        expect(Math.ceil((afterDAIBal * 10) / afterVaultValue)).to.be.gte(
+          (6000 * 10) / 10000
+        );
+        expect(Math.ceil((afterWBNBBal * 10) / afterVaultValue)).to.be.gte(
+          (2000 * 10) / 10000
+        );
       });
 
       it("when withdraw fund more then balance", async () => {
