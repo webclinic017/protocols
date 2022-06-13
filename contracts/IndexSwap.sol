@@ -288,9 +288,7 @@ contract IndexSwap is TokenBase, BMath {
                 oldWeights[i] = tokenBalanceInBNB[i].mul(10000).div(
                     vaultBalance
                 );
-                newWeights[i] = uint256(_records[_tokens[i]].denorm)
-                    .mul(10000)
-                    .div(TOTAL_WEIGHT);
+                newWeights[i] = uint256(_records[_tokens[i]].denorm);
             }
 
             // sell - swap to BNB
