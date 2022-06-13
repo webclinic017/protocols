@@ -15,7 +15,9 @@ import "./interfaces/IBalancerLib.sol";
 import "./interfaces/IWETH.sol";
 
 contract TokenBase is ERC20, ERC20Burnable, Ownable {
-    constructor() ERC20("INDEXLY", "IDX") {}
+    constructor(string memory _name, string memory _symbol)
+        ERC20(_name, _symbol)
+    {}
 }
 
 contract IndexSwap is TokenBase, BMath {
@@ -69,11 +71,13 @@ contract IndexSwap is TokenBase, BMath {
     address outAssest;
 
     constructor(
+        string memory _name,
+        string memory _symbol,
         address _oracle,
         address _outAssest,
         address _pancakeSwapAddress,
         address _vault
-    ) {
+    ) TokenBase(_name, _symbol) {
         pancakeSwapRouter = IUniswapV2Router02(_pancakeSwapAddress);
         oracle = IPriceOracle(_oracle);
         vault = _vault;
@@ -387,7 +391,7 @@ contract IndexSwap is TokenBase, BMath {
                 // token removed
                 if (newDenorms[i] == 0) {
                     uint256 tokenBalance = IERC20(t).balanceOf(vault);
-                    
+
                     _pullFromVault(t, tokenBalance, address(this));
                     _swapTokensToETH(t, tokenBalance, address(this));
 

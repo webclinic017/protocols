@@ -80,6 +80,8 @@ describe.skip("Tests for IndexFactory", () => {
       let indexAddress = "";
 
       const index = await indexFactory.createIndex(
+        "INDEXLY",
+        "IDX",
         priceOracle.address,
         addresses.WETH_Address,
         addresses.PancakeSwapRouterAddress,
@@ -118,6 +120,8 @@ describe.skip("Tests for IndexFactory", () => {
         let indexAddress = "";
 
         const index = await indexFactory.createIndex(
+          "INDEXLY",
+          "IDX",
           priceOracle.address,
           addresses.WETH_Address,
           addresses.PancakeSwapRouterAddress,

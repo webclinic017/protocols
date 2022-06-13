@@ -67,6 +67,8 @@ describe.only("Tests for IndexSwap", () => {
 
       const IndexSwap = await ethers.getContractFactory("IndexSwap");
       indexSwap = await IndexSwap.deploy(
+        "INDEXLY",
+        "IDX",
         priceOracle.address, // price oracle
         addresses.WETH_Address,
         addresses.PancakeSwapRouterAddress,
@@ -95,6 +97,10 @@ describe.only("Tests for IndexSwap", () => {
     });
 
     describe("IndexSwap Contract", function () {
+      it("should check Index token name and symbol", async () => {
+        expect(await indexSwap.name()).to.eq("INDEXLY");
+        expect(await indexSwap.symbol()).to.eq("IDX");
+      });
       it("Initialize IndexFund Tokens", async () => {
         await indexSwap
           .connect(owner)
