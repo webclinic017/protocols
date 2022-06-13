@@ -50,8 +50,6 @@ contract IndexSwap is TokenBase, BMath {
     // Total denormalized weight of the pool.
     uint256 internal constant TOTAL_WEIGHT = 10_000;
 
-    uint256 internal indexDivisor;
-
     mapping(address => uint256) admins;
 
     IPriceOracle oracle;
@@ -104,7 +102,6 @@ contract IndexSwap is TokenBase, BMath {
         require(_tokens.length == 0, "INITIALIZED");
         uint256 len = tokens.length;
         uint256 totalWeight = 0;
-        uint256 sumPrice = 0;
         for (uint256 i = 0; i < len; i++) {
             _records[tokens[i]] = Record({
                 lastDenormUpdate: uint40(block.timestamp),
@@ -112,18 +109,15 @@ contract IndexSwap is TokenBase, BMath {
                 index: uint8(i)
             });
             _tokens.push(tokens[i]);
-            uint256 priceToken = oracle.getTokenPrice(_tokens[i], outAssest);
 
-            sumPrice = sumPrice.add(priceToken);
             totalWeight = badd(totalWeight, denorms[i]);
         }
         require(totalWeight == TOTAL_WEIGHT, "INVALID_WEIGHTS");
 
-        indexDivisor = sumPrice.div(len);
         emit LOG_PUBLIC_SWAP_ENABLED();
     }
 
-    function mintShareAmount(uint256 _amount, uint256 sumPrice)
+    function _mintShareAmount(uint256 _amount, uint256 sumPrice)
         internal
         view
         returns (uint256 price)
@@ -149,15 +143,13 @@ contract IndexSwap is TokenBase, BMath {
             */
             for (uint256 i = 0; i < len; i++) {
                 uint256 tokenBalance = IERC20(_tokens[i]).balanceOf(vault);
-                uint256 priceToken;
                 uint256 tokenBalanceBNB;
                 if (_tokens[i] == getETH()) {
                     tokenBalanceBNB = tokenBalance;
                 } else {
-                    uint256 decimal = oracle.getDecimal(_tokens[i]);
-                    priceToken = oracle.getTokenPrice(_tokens[i], outAssest);
-                    tokenBalanceBNB = priceToken.mul(tokenBalance).div(
-                        10**decimal
+                    tokenBalanceBNB = _getTokenAmountInBNB(
+                        _tokens[i],
+                        tokenBalance
                     );
                 }
                 tokenBalanceInBNB[i] = tokenBalanceBNB;
@@ -201,22 +193,17 @@ contract IndexSwap is TokenBase, BMath {
                 swapAmount = amount[i];
             }
 
-            uint256 swapResultBNB;
-
             require(address(this).balance >= swapAmount, "not enough bnb");
 
             uint256 swapResult = _swapETHToTokens(t, swapAmount, vault);
             if (t == getETH()) {
-                swapResultBNB = swapResult;
                 investedAmountAfterSlippage = investedAmountAfterSlippage.add(
                     swapResult
                 );
             } else {
                 // take the amount actually being swapped and convert it to BNB for calculation of the index token amount to mint
-                swapResultBNB = oracle.getTokenPrice(t, outAssest);
-                uint256 decimal = IERC20Metadata(t).decimals();
                 investedAmountAfterSlippage = investedAmountAfterSlippage.add(
-                    swapResultBNB.mul(swapResult).div(10**decimal)
+                    _getTokenAmountInBNB(t, swapResult)
                 );
             }
         }
@@ -229,7 +216,7 @@ contract IndexSwap is TokenBase, BMath {
             to make sure the index token amount represents the invested amount after slippage
         */
         if (totalSupply() > 0) {
-            tokenAmount = mintShareAmount(
+            tokenAmount = _mintShareAmount(
                 investedAmountAfterSlippage,
                 vaultBalance
             );
@@ -280,12 +267,11 @@ contract IndexSwap is TokenBase, BMath {
         uint256[] memory oldWeights = new uint256[](len);
         uint256[] memory tokenBalanceInBNB = new uint256[](len);
 
-        // get current rates xx.xx% (*10000)
         (tokenBalanceInBNB, vaultBalance) = getTokenAndVaultBalance();
 
         if (totalSupply() > 0) {
             for (uint256 i = 0; i < _tokens.length; i++) {
-                oldWeights[i] = tokenBalanceInBNB[i].mul(10000).div(
+                oldWeights[i] = tokenBalanceInBNB[i].mul(TOTAL_WEIGHT).div(
                     vaultBalance
                 );
                 newWeights[i] = uint256(_records[_tokens[i]].denorm);
@@ -478,6 +464,16 @@ contract IndexSwap is TokenBase, BMath {
                 block.timestamp
             )[1];
         }
+    }
+
+    function _getTokenAmountInBNB(address t, uint256 amount)
+        internal
+        view
+        returns (uint256 amountInBNB)
+    {
+        uint256 decimal = oracle.getDecimal(t);
+        uint256 tokenPrice = oracle.getTokenPrice(t, outAssest);
+        amountInBNB = tokenPrice.mul(amount).div(10**decimal);
     }
 
     // important to receive ETH
