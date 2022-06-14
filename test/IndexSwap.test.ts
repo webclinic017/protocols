@@ -54,9 +54,7 @@ describe.only("Tests for IndexSwap", () => {
     IERC20__factory.abi,
     ethers.getDefaultProvider()
   );
-  // const wbnbInstance.address =addresses.WETH_Address;
-  // const btcInstance.address = addresses.BTC_Address;
-  // const ethInstance.address = addresses.ETH_Address;
+
   describe.only("Tests for IndexSwap contract", () => {
     before(async () => {
       accounts = await ethers.getSigners();
@@ -69,6 +67,8 @@ describe.only("Tests for IndexSwap", () => {
 
       const IndexSwap = await ethers.getContractFactory("IndexSwap");
       indexSwap = await IndexSwap.deploy(
+        "INDEXLY",
+        "IDX",
         priceOracle.address, // price oracle
         addresses.WETH_Address,
         addresses.PancakeSwapRouterAddress,
@@ -97,90 +97,164 @@ describe.only("Tests for IndexSwap", () => {
     });
 
     describe("IndexSwap Contract", function () {
+      it("should check Index token name and symbol", async () => {
+        expect(await indexSwap.name()).to.eq("INDEXLY");
+        expect(await indexSwap.symbol()).to.eq("IDX");
+      });
+      it("initialize should revert if total Weights not equal 10,000", async () => {
+        await expect(
+          indexSwap.initialize(
+            [busdInstance.address, ethInstance.address],
+            [5000, 1000]
+          )
+        ).to.be.revertedWith("INVALID_WEIGHTS");
+      });
       it("Initialize IndexFund Tokens", async () => {
-        await indexSwap
-          .connect(owner)
-          .initialize([busdInstance.address, ethInstance.address], [1, 1]);
-      });
-
-      it("Update rate to 1,1", async () => {
-        const numerator = 1;
-        const denominator = 1;
-        await indexSwap.updateRate(numerator, denominator);
-        const currentRate = await indexSwap.currentRate();
-
-        expect(currentRate.numerator).to.be.equal(numerator);
-        expect(currentRate.denominator).to.be.equal(denominator);
-      });
-
-      it("Test amount and vault values", async () => {
-        const values = await indexSwap.getTokenAndVaultBalance();
-        //console.log("tokenBalances", values[0]);
-        //console.log("vault", values[1]);
+        await indexSwap.initialize(
+          [busdInstance.address, ethInstance.address],
+          [5000, 5000]
+        );
       });
 
       it("Invest 0.1BNB into Top10 fund", async () => {
         const indexSupplyBefore = await indexSwap.totalSupply();
-        //console.log("0.1 before", indexSupplyBefore);
-        await indexSwap.investInFund({
-          value: "100000000000000000",
-        });
-        const indexSupplyAfter = await indexSwap.totalSupply();
-        //console.log("0.1 after", indexSupplyAfter);
-      });
 
-      it("Test amount and vault values", async () => {
-        const values = await indexSwap.getTokenAndVaultBalance();
-        //console.log("tokenBalances", values[0]);
-        //console.log("vault", values[1]);
-      });
-
-      it("Invest 0.1BNB into Top10 fund", async () => {
-        const indexSupplyBefore = await indexSwap.totalSupply();
-        //console.log("0.1 before", indexSupplyBefore);
         await indexSwap.investInFund({
-          value: "100000000000000000",
+          value: ethers.utils.parseEther("0.1"),
         });
         const indexSupplyAfter = await indexSwap.totalSupply();
         const valuesAfter = await indexSwap.getTokenAndVaultBalance();
         const balancesAfter = valuesAfter[0];
         bnbBefore = Number(balancesAfter[1]);
+
+        expect(Number(indexSupplyAfter)).to.be.gt(Number(indexSupplyBefore));
       });
 
       it("Invest 0.2BNB into Top10 fund", async () => {
         const indexSupplyBefore = await indexSwap.totalSupply();
-        //console.log("0.2 before", indexSupplyBefore);
+
         await indexSwap.investInFund({
-          value: "200000000000000000",
+          value: ethers.utils.parseEther("0.2"),
         });
         const indexSupplyAfter = await indexSwap.totalSupply();
         const valuesAfter = await indexSwap.getTokenAndVaultBalance();
         const balancesAfter = valuesAfter[0];
         bnbAfter = Number(balancesAfter[1]);
+
+        expect(Number(indexSupplyAfter)).to.be.gt(Number(indexSupplyBefore));
       });
 
       it("BNB amount increases after investing", async () => {
-        expect(bnbAfter).to.be.greaterThan(bnbBefore);
-      });
-
-      it("Test amount and vault values", async () => {
-        const values = await indexSwap.getTokenAndVaultBalance();
-        //console.log("tokenBalances", values[0]);
-        //console.log("vault", values[1]);
-      });
-
-      it("Update rate to 2,2", async () => {
-        const numerator = 2;
-        const denominator = 2;
-        await indexSwap.updateRate(numerator, denominator);
-        const currentRate = await indexSwap.currentRate();
-
-        expect(currentRate.numerator).to.be.equal(numerator);
-        expect(currentRate.denominator).to.be.equal(denominator);
+        expect(bnbAfter).to.be.gt(bnbBefore);
       });
 
       it("should Rebalance", async () => {
-        await indexSwap.rebalance([2, 3]);
+        await indexSwap.rebalance();
+      });
+
+      it("updateWeights should revert if total Weights not equal 10,000", async () => {
+        await expect(indexSwap.updateWeights([100, 200])).to.be.revertedWith(
+          "INVALID_WEIGHTS"
+        );
+      });
+      it("should Update Weights and Rebalance", async () => {
+        const {
+          tokenXBalance: beforeTokenXBalance,
+          vaultValue: beforeVaultValue,
+        } = await indexSwap.getTokenAndVaultBalance();
+
+        await indexSwap.updateWeights([3333, 6667]);
+
+        const {
+          tokenXBalance: afterTokenXBalance,
+          vaultValue: afterVaultValueBN,
+        } = await indexSwap.getTokenAndVaultBalance();
+
+        // console.log({
+        //   beforeToken0Bal: ethers.utils.formatEther(beforeTokenXBalance[0]),
+        //   beforeToken1Bal: ethers.utils.formatEther(beforeTokenXBalance[1]),
+        //   beforeVaultValue: ethers.utils.formatEther(beforeVaultValue),
+        //   afterToken0Bal: ethers.utils.formatEther(afterTokenXBalance[0]),
+        //   afterToken1Bal: ethers.utils.formatEther(afterTokenXBalance[1]),
+        //   afterVaultValue: ethers.utils.formatEther(afterVaultValueBN),
+        // });
+
+        const afterToken0Bal = Number(
+          ethers.utils.formatEther(afterTokenXBalance[0])
+        );
+        const afterToken1Bal = Number(
+          ethers.utils.formatEther(afterTokenXBalance[1])
+        );
+        const afterVaultValue = Number(
+          ethers.utils.formatEther(afterVaultValueBN)
+        );
+
+        expect(Math.ceil((afterToken0Bal * 10) / afterVaultValue)).to.be.gte(
+          (3333 * 10) / 10000
+        );
+        expect(Math.ceil((afterToken1Bal * 10) / afterVaultValue)).to.be.gte(
+          (6667 * 10) / 10000
+        );
+      });
+
+      it("updateTokens should revert if total Weights not equal 10,000", async () => {
+        await expect(
+          indexSwap.updateTokens(
+            [ethInstance.address, daiInstance.address, wbnbInstance.address],
+            [2000, 6000, 1000]
+          )
+        ).to.be.revertedWith("INVALID_WEIGHTS");
+      });
+      it("should update tokens", async () => {
+        // current = BUSD:ETH = 1:2
+        // target = ETH:DAI:WBNB = 1:3:1
+
+        const {
+          tokenXBalance: beforeTokenXBalance,
+          vaultValue: beforeVaultValue,
+        } = await indexSwap.getTokenAndVaultBalance();
+
+        await indexSwap.updateTokens(
+          [ethInstance.address, daiInstance.address, wbnbInstance.address],
+          [2000, 6000, 2000]
+        );
+
+        const {
+          tokenXBalance: afterTokenXBalance,
+          vaultValue: afterVaultValueBN,
+        } = await indexSwap.getTokenAndVaultBalance();
+
+        // console.log({
+        //   beforeBUSDBal: ethers.utils.formatEther(beforeTokenXBalance[0]),
+        //   beforeETHBal: ethers.utils.formatEther(beforeTokenXBalance[1]),
+        //   beforeVaultValue: ethers.utils.formatEther(beforeVaultValue),
+        //   afterETHBal: ethers.utils.formatEther(afterTokenXBalance[0]),
+        //   afterDAIBal: ethers.utils.formatEther(afterTokenXBalance[1]),
+        //   afterWBNBBal: ethers.utils.formatEther(afterTokenXBalance[2]),
+        //   afterVaultValue: ethers.utils.formatEther(afterVaultValue),
+        // });
+        const afterETHBal = Number(
+          ethers.utils.formatEther(afterTokenXBalance[0])
+        );
+        const afterDAIBal = Number(
+          ethers.utils.formatEther(afterTokenXBalance[1])
+        );
+        const afterWBNBBal = Number(
+          ethers.utils.formatEther(afterTokenXBalance[2])
+        );
+        const afterVaultValue = Number(
+          ethers.utils.formatEther(afterVaultValueBN)
+        );
+
+        expect(Math.ceil((afterETHBal * 10) / afterVaultValue)).to.be.gte(
+          (2000 * 10) / 10000
+        );
+        expect(Math.ceil((afterDAIBal * 10) / afterVaultValue)).to.be.gte(
+          (6000 * 10) / 10000
+        );
+        expect(Math.ceil((afterWBNBBal * 10) / afterVaultValue)).to.be.gte(
+          (2000 * 10) / 10000
+        );
       });
 
       it("when withdraw fund more then balance", async () => {
@@ -192,7 +266,6 @@ describe.only("Tests for IndexSwap", () => {
           indexSwap.connect(nonOwner).withdrawFund(AMOUNT)
         ).to.be.revertedWith("caller is not holding given token amount");
       });
-
       it("should withdraw fund and burn index token successfully", async () => {
         const amountIndexToken = await indexSwap.balanceOf(owner.address);
         //console.log(amountIndexToken, "amountIndexToken");
