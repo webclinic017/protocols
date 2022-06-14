@@ -210,7 +210,7 @@ describe("Top 10 Index", () => {
   });
 
   it("Rebalance to 80/5/5/5/5", async () => {
-    let newWeights = [6000, 1000, 1000, 1000, 1000];
+    let newWeights = [4500, 500, 500, 500, 500, 500, 500, 500, 500, 500];
     await indexSwap.rebalance(newWeights);
 
     // get current weights and check
@@ -253,7 +253,7 @@ describe("Top 10 Index", () => {
   });
 
   it("Rebalance to 30/10/10/20/5/5/5/5/5/5", async () => {
-    let newWeights = [3000, 1000, 1000, 2000, 3000];
+    let newWeights = [3000, 1000, 1000, 1000, 1500, 500, 500, 500, 500, 500];
     await indexSwap.rebalance(newWeights);
 
     // get current weights and check
@@ -274,7 +274,9 @@ describe("Top 10 Index", () => {
   });
 
   it("Rebalance to equally weighted (10% each)", async () => {
-    let newWeights = [2000, 2000, 2000, 2000, 2000];
+    let newWeights = [
+      1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000,
+    ];
     await indexSwap.rebalance(newWeights);
 
     // get current weights and check

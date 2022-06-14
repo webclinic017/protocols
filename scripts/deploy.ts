@@ -31,7 +31,7 @@ async function main() {
   const indexSwap = await IndexSwap.deploy(
     priceOracle.address,
     "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", // wbnb
-    "0x10ED43C718714eb63d5aA57B78B54704E256024E", // pancake router
+    "0x3a6d8cA21D1CF76F653A67577FA0D27453350dD8", // pancake router
     "0xab749F4270565DBc92d9a142B32C40636Cc9386B", // vault
     "0xEf73E58650868f316461936A092818d5dF96102E" // module
   );

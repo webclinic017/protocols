@@ -468,12 +468,10 @@ contract IndexSwap is TokenBase, BMath {
     address private vault;
     MyModule gnosisSafe;
 
-    address[5] tokenDefault = [
+    address[3] tokenDefault = [
         0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c, // BTC
         0x2170Ed0880ac9A755fd29B2688956BD959F933F8, // ETH
-        0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE, // XRP
-        0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47, // ADA
-        0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c // WBNB
+        0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE // XRP
 
         /*
         working addresses blue chip
@@ -507,7 +505,7 @@ contract IndexSwap is TokenBase, BMath {
         */
     ];
 
-    uint96[5] denormsDefult = [1, 1, 1, 1, 1];
+    uint96[3] denormsDefult = [1, 1, 1];
 
     struct rate {
         uint256 numerator;
@@ -725,12 +723,11 @@ contract IndexSwap is TokenBase, BMath {
 
     function investInFund() public payable {
         uint256 tokenAmount = msg.value;
-        uint256 investedAmountAfterSlippage = 0;
         uint256 vaultBalance = 0;
         uint256 len = _tokens.length;
         uint256[] memory amount = new uint256[](len);
         uint256[] memory tokenBalanceInBNB = new uint256[](len);
-
+        uint256 investedAmountAfterSlippage = 0;
         (tokenBalanceInBNB, vaultBalance) = getTokenAndVaultBalance();
 
         //calculate the swap amount for each token to ensure that the ratio (weight in the portfolio) stays constant
@@ -767,9 +764,15 @@ contract IndexSwap is TokenBase, BMath {
                 );
             } else {
                 uint256[] memory swapResult;
+                uint256[] memory amountsOut = pancakeSwapRouter.getAmountsOut(
+                    swapAmount,
+                    getPathForETH(t)
+                );
+                uint256 amountOut = amountsOut[1];
+
                 swapResult = pancakeSwapRouter.swapExactETHForTokens{
                     value: swapAmount
-                }(0, getPathForETH(t), vault, deadline);
+                }(amountOut, getPathForETH(t), vault, deadline);
 
                 // take the amount actually being swapped and convert it to BNB for calculation of the index token amount to mint
                 swapResultBNB = oracal.getTokenPrice(_tokens[i], outAssest);
@@ -830,9 +833,16 @@ contract IndexSwap is TokenBase, BMath {
                     address(pancakeSwapRouter),
                     amount
                 );
+
+                uint256[] memory amountsOut = pancakeSwapRouter.getAmountsOut(
+                    amount,
+                    getPathForToken(t)
+                );
+                uint256 amountOut = amountsOut[1];
+
                 pancakeSwapRouter.swapExactTokensForETH(
                     amount,
-                    0,
+                    amountOut,
                     getPathForToken(t),
                     msg.sender,
                     deadline
@@ -887,10 +897,17 @@ contract IndexSwap is TokenBase, BMath {
                             address(pancakeSwapRouter),
                             _swapAmount
                         );
+                        uint256[] memory amountsOut = pancakeSwapRouter
+                            .getAmountsOut(
+                                _swapAmount,
+                                getPathForToken(_tokens[i])
+                            );
+                        uint256 amountOut = amountsOut[1];
+
                         uint256[] memory swapResult;
                         swapResult = pancakeSwapRouter.swapExactTokensForETH(
                             _swapAmount,
-                            0,
+                            amountOut,
                             getPathForToken(_tokens[i]),
                             address(this),
                             deadline
@@ -921,9 +938,12 @@ contract IndexSwap is TokenBase, BMath {
                         token.deposit{value: swapAmount}();
                         token.transfer(vault, swapAmount);
                     } else {
+                        uint256[] memory amountsOut = pancakeSwapRouter
+                            .getAmountsOut(swapAmount, getPathForETH(t));
+                        uint256 amountOut = amountsOut[1];
                         pancakeSwapRouter.swapExactETHForTokens{
                             value: swapAmount
-                        }(0, getPathForETH(t), vault, deadline);
+                        }(amountOut, getPathForETH(t), vault, deadline);
                     }
                 }
             }
