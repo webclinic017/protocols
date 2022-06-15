@@ -72,7 +72,9 @@ describe.only("Tests for IndexSwap", () => {
         priceOracle.address, // price oracle
         addresses.WETH_Address,
         addresses.PancakeSwapRouterAddress,
-        vault.address
+        vault.address,
+        "0",
+        "500000000000000000000"
       );
 
       await indexSwap.deployed();
