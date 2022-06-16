@@ -4,6 +4,7 @@ import "./interfaces/IUniswapV2Router02.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -13,7 +14,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IPriceOracle.sol";
 import "./interfaces/IWETH.sol";
 
-contract TokenBase is ERC20, ERC20Burnable, Ownable {
+contract TokenBase is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     constructor(string memory _name, string memory _symbol)
         ERC20(_name, _symbol)
     {}
@@ -162,7 +163,7 @@ contract IndexSwap is TokenBase {
         }
     }
 
-    function investInFund() public payable {
+    function investInFund() public payable nonReentrant {
         uint256 tokenAmount = msg.value;
         uint256 investedAmountAfterSlippage = 0;
         uint256 vaultBalance = 0;
@@ -230,7 +231,7 @@ contract IndexSwap is TokenBase {
         require(success, "refund failed");
     }
 
-    function withdrawFund(uint256 tokenAmount) public {
+    function withdrawFund(uint256 tokenAmount) public nonReentrant {
         require(
             tokenAmount <= balanceOf(msg.sender),
             "caller is not holding given token amount"
@@ -257,7 +258,7 @@ contract IndexSwap is TokenBase {
         }
     }
 
-    function rebalance() public onlyAssetManager {
+    function rebalance() public onlyAssetManager nonReentrant {
         uint256 sumWeightsToSwap = 0;
         uint256 vaultBalance = 0;
         uint256 len = _tokens.length;
