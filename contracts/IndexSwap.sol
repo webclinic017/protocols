@@ -4,6 +4,7 @@ import "./interfaces/IUniswapV2Router02.sol";
 import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -52,9 +53,6 @@ contract IndexSwap is TokenBase, BMath {
     uint256 internal constant TOTAL_WEIGHT = 10_000;
 
     // Total denormalized weight of the pool.
-    uint256 internal MIN_INVESTMENTAMOUNT;
-
-    // Total denormalized weight of the pool.
     uint256 internal MAX_INVESTMENTAMOUNT;
 
     mapping(address => uint256) admins;
@@ -70,7 +68,6 @@ contract IndexSwap is TokenBase, BMath {
         address _outAssest,
         address _pancakeSwapAddress,
         address _vault,
-        uint256 _minInvestmentAmount,
         uint256 _maxInvestmentAmount
     ) TokenBase(_name, _symbol) {
         pancakeSwapRouter = IUniswapV2Router02(_pancakeSwapAddress);
@@ -78,7 +75,6 @@ contract IndexSwap is TokenBase, BMath {
         vault = _vault;
         outAssest = _outAssest; //As now we are tacking busd
         assetManagers[msg.sender] = true;
-        MIN_INVESTMENTAMOUNT = _minInvestmentAmount;
         MAX_INVESTMENTAMOUNT = _maxInvestmentAmount;
     }
 
@@ -215,10 +211,6 @@ contract IndexSwap is TokenBase, BMath {
      */
     function investInFund() public payable {
         uint256 tokenAmount = msg.value;
-        require(
-            tokenAmount >= MIN_INVESTMENTAMOUNT,
-            "Amount is less than minimum investment amount!"
-        );
         require(
             tokenAmount <= MAX_INVESTMENTAMOUNT,
             "Amount exceeds maximum investment amount!"

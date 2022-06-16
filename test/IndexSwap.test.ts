@@ -73,7 +73,6 @@ describe.only("Tests for IndexSwap", () => {
         addresses.WETH_Address,
         addresses.PancakeSwapRouterAddress,
         vault.address,
-        "0",
         "500000000000000000000"
       );
 

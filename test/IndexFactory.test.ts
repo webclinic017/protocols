@@ -86,7 +86,6 @@ describe.skip("Tests for IndexFactory", () => {
         addresses.WETH_Address,
         addresses.PancakeSwapRouterAddress,
         addresses.Vault,
-        "0",
         "500000000000000000000"
       );
 
@@ -128,7 +127,6 @@ describe.skip("Tests for IndexFactory", () => {
           addresses.WETH_Address,
           addresses.PancakeSwapRouterAddress,
           addresses.Vault,
-          "0",
           "500000000000000000000"
         );
 
