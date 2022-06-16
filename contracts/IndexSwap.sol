@@ -11,7 +11,6 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IPriceOracle.sol";
-import "./interfaces/IBalancerLib.sol";
 import "./interfaces/IWETH.sol";
 
 contract TokenBase is ERC20, ERC20Burnable, Ownable {
@@ -20,7 +19,7 @@ contract TokenBase is ERC20, ERC20Burnable, Ownable {
     {}
 }
 
-contract IndexSwap is TokenBase, BMath {
+contract IndexSwap is TokenBase {
     IUniswapV2Router02 public pancakeSwapRouter;
 
     // IERC20 public token;
@@ -110,7 +109,7 @@ contract IndexSwap is TokenBase, BMath {
             });
             _tokens.push(tokens[i]);
 
-            totalWeight = badd(totalWeight, denorms[i]);
+            totalWeight = totalWeight.add(denorms[i]);
         }
         require(totalWeight == TOTAL_WEIGHT, "INVALID_WEIGHTS");
 
@@ -323,7 +322,7 @@ contract IndexSwap is TokenBase, BMath {
             record.lastDenormUpdate = uint40(block.timestamp);
             record.denorm = denorms[i];
 
-            totalWeight = badd(totalWeight, denorms[i]);
+            totalWeight = totalWeight.add(denorms[i]);
         }
         require(totalWeight == TOTAL_WEIGHT, "INVALID_WEIGHTS");
 
@@ -338,7 +337,7 @@ contract IndexSwap is TokenBase, BMath {
         uint256 totalWeight = 0;
 
         for (uint256 i = 0; i < len; i++) {
-            totalWeight = badd(totalWeight, denorms[i]);
+            totalWeight = totalWeight.add(denorms[i]);
         }
         require(totalWeight == TOTAL_WEIGHT, "INVALID_WEIGHTS");
 
