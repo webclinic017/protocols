@@ -153,6 +153,12 @@ describe.only("Tests for IndexSwap", () => {
         await indexSwap.rebalance();
       });
 
+      it("should revert when Rebalance is called from an account which is not assigned as asset manager", async () => {
+        await expect(
+          indexSwap.connect(nonOwner).rebalance()
+        ).to.be.revertedWith("Caller is not an Asset Manager");
+      });
+
       it("updateWeights should revert if total Weights not equal 10,000", async () => {
         await expect(indexSwap.updateWeights([100, 200])).to.be.revertedWith(
           "INVALID_WEIGHTS"

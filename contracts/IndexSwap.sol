@@ -16,7 +16,7 @@ import "./interfaces/IBalancerLib.sol";
 import "./interfaces/IPriceOracle.sol";
 import "./interfaces/IWETH.sol";
 
-contract TokenBase is ERC20, ERC20Burnable, Ownable {
+contract TokenBase is ERC20, ERC20Burnable, Ownable, AccessControl {
     constructor(string memory _name, string memory _symbol)
         ERC20(_name, _symbol)
     {}
@@ -55,7 +55,8 @@ contract IndexSwap is TokenBase, BMath {
     // Total denormalized weight of the pool.
     uint256 internal MAX_INVESTMENTAMOUNT;
 
-    mapping(address => uint256) admins;
+    bytes32 public constant ASSET_MANAGER_ROLE =
+        keccak256("ASSET_MANAGER_ROLE");
 
     IPriceOracle oracle;
 
@@ -74,23 +75,12 @@ contract IndexSwap is TokenBase, BMath {
         oracle = IPriceOracle(_oracle);
         vault = _vault;
         outAssest = _outAssest; //As now we are tacking busd
-        assetManagers[msg.sender] = true;
         MAX_INVESTMENTAMOUNT = _maxInvestmentAmount;
-    }
 
-    mapping(address => bool) public assetManagers;
-
-    modifier onlyAssetManager() {
-        require(assetManagers[msg.sender]);
-        _;
-    }
-
-    function addAssetManager(address assetManager) public onlyAssetManager {
-        require(
-            assetManager != address(0),
-            "Ownable: new manager is the zero address"
-        );
-        assetManagers[assetManager] = true;
+        // OpenZeppelin Access Control
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _setRoleAdmin(ASSET_MANAGER_ROLE, DEFAULT_ADMIN_ROLE);
+        _setupRole(ASSET_MANAGER_ROLE, msg.sender);
     }
 
     /** @dev Emitted when public trades are enabled. */
@@ -342,7 +332,11 @@ contract IndexSwap is TokenBase, BMath {
     /**
      * @notice The function rebalances the token weights in the portfolio
      */
-    function rebalance() public onlyAssetManager {
+    function rebalance() public {
+        require(
+            hasRole(ASSET_MANAGER_ROLE, msg.sender),
+            "Caller is not an Asset Manager"
+        );
         require(totalSupply() > 0);
 
         uint256 vaultBalance = 0;
@@ -369,7 +363,11 @@ contract IndexSwap is TokenBase, BMath {
      * @notice The function updates the token weights and rebalances the portfolio to the new weights
      * @param denorms The new token weights of the portfolio
      */
-    function updateWeights(uint96[] calldata denorms) public onlyAssetManager {
+    function updateWeights(uint96[] calldata denorms) public {
+        require(
+            hasRole(ASSET_MANAGER_ROLE, msg.sender),
+            "Caller is not an Asset Manager"
+        );
         require(denorms.length == _tokens.length, "Lengths don't match");
 
         updateRecords(_tokens, denorms);
@@ -426,8 +424,11 @@ contract IndexSwap is TokenBase, BMath {
      */
     function updateTokens(address[] memory tokens, uint96[] memory denorms)
         public
-        onlyAssetManager
     {
+        require(
+            hasRole(ASSET_MANAGER_ROLE, msg.sender),
+            "Caller is not an Asset Manager"
+        );
         uint256 totalWeight = 0;
 
         for (uint256 i = 0; i < tokens.length; i++) {
