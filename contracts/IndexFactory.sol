@@ -12,7 +12,6 @@ contract IndexFactory {
         address _outAssest,
         address _pancakeSwapAddress,
         address _vault,
-        uint256 _minInvestmentAmount,
         uint256 _maxInvestmentAmount
     );
 
@@ -23,7 +22,6 @@ contract IndexFactory {
         address _outAssest,
         address _pancakeSwapAddress,
         address _vault,
-        uint256 _minInvestmentAmount,
         uint256 _maxInvestmentAmount
     ) public returns (IndexSwap index) {
         index = new IndexSwap(
@@ -33,7 +31,6 @@ contract IndexFactory {
             _outAssest,
             _pancakeSwapAddress,
             _vault,
-            _minInvestmentAmount,
             _maxInvestmentAmount
         );
 
@@ -45,7 +42,6 @@ contract IndexFactory {
             _outAssest,
             _pancakeSwapAddress,
             _vault,
-            _minInvestmentAmount,
             _maxInvestmentAmount
         );
     }
