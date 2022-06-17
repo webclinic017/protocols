@@ -62,14 +62,14 @@ contract Rebalancing is AccessControl, BMath {
                         _index,
                         t,
                         swapAmount,
-                        msg.sender
+                        address(this)
                     );
                 } else {
                     indexManager._pullFromVault(
                         _index,
                         t,
                         swapAmount,
-                        address(indexManager)
+                        address(this)
                     );
                     indexManager._swapTokenToETH(t, swapAmount, msg.sender);
                 }
