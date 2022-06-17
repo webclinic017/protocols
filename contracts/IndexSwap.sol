@@ -83,6 +83,14 @@ contract IndexSwap is TokenBase, BMath {
         _setupRole(ASSET_MANAGER_ROLE, msg.sender);
     }
 
+    modifier onlyAssetManager() {
+        require(
+            hasRole(ASSET_MANAGER_ROLE, msg.sender),
+            "Caller is not an Asset Manager"
+        );
+        _;
+    }
+
     /** @dev Emitted when public trades are enabled. */
     event LOG_PUBLIC_SWAP_ENABLED();
 
@@ -332,11 +340,7 @@ contract IndexSwap is TokenBase, BMath {
     /**
      * @notice The function rebalances the token weights in the portfolio
      */
-    function rebalance() public {
-        require(
-            hasRole(ASSET_MANAGER_ROLE, msg.sender),
-            "Caller is not an Asset Manager"
-        );
+    function rebalance() public onlyAssetManager {
         require(totalSupply() > 0);
 
         uint256 vaultBalance = 0;
@@ -363,11 +367,7 @@ contract IndexSwap is TokenBase, BMath {
      * @notice The function updates the token weights and rebalances the portfolio to the new weights
      * @param denorms The new token weights of the portfolio
      */
-    function updateWeights(uint96[] calldata denorms) public {
-        require(
-            hasRole(ASSET_MANAGER_ROLE, msg.sender),
-            "Caller is not an Asset Manager"
-        );
+    function updateWeights(uint96[] calldata denorms) public onlyAssetManager {
         require(denorms.length == _tokens.length, "Lengths don't match");
 
         updateRecords(_tokens, denorms);
@@ -424,11 +424,8 @@ contract IndexSwap is TokenBase, BMath {
      */
     function updateTokens(address[] memory tokens, uint96[] memory denorms)
         public
+        onlyAssetManager
     {
-        require(
-            hasRole(ASSET_MANAGER_ROLE, msg.sender),
-            "Caller is not an Asset Manager"
-        );
         uint256 totalWeight = 0;
 
         for (uint256 i = 0; i < tokens.length; i++) {
