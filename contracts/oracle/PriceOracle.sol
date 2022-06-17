@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.4;
 
-import "./lib/UQ112x112.sol";
-import "./interfaces/IUniswapV2Pair.sol";
-import "./interfaces/IPriceOracle.sol";
-import "./interfaces/IUniswapV2Router02.sol";
-import "./interfaces/IUniswapV2Factory.sol";
+import "../lib/UQ112x112.sol";
+import "../interfaces/IUniswapV2Pair.sol";
+import "../interfaces/IPriceOracle.sol";
+import "../interfaces/IUniswapV2Router02.sol";
+import "../interfaces/IUniswapV2Factory.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
@@ -70,7 +70,7 @@ contract PriceOracle is IPriceOracle {
             priceCumulativeCurrent,
             blockTimestamp,
             true
-          );
+        );
     }
 
     function toUint224(uint256 input) internal pure returns (uint224) {

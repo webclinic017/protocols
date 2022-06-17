@@ -1,7 +1,14 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { IndexSwap, PriceOracle, IERC20__factory } from "../typechain";
+import {
+  IndexSwap,
+  PriceOracle,
+  IERC20__factory,
+  IndexSwapLibrary,
+  IndexManager,
+  Rebalancing,
+} from "../typechain";
 import { chainIdToAddresses } from "../scripts/networkVariables";
 
 //use default BigNumber
@@ -11,6 +18,9 @@ describe.only("Tests for IndexSwap", () => {
   let accounts;
   let priceOracle: PriceOracle;
   let indexSwap: IndexSwap;
+  let indexSwapLibrary: IndexSwapLibrary;
+  let indexManager: IndexManager;
+  let rebalancing: Rebalancing;
   let txObject;
   let owner: SignerWithAddress;
   let nonOwner: SignerWithAddress;
@@ -65,34 +75,54 @@ describe.only("Tests for IndexSwap", () => {
       await priceOracle.deployed();
       await priceOracle.initialize(addresses.PancakeSwapRouterAddress);
 
+      const IndexSwapLibrary = await ethers.getContractFactory(
+        "IndexSwapLibrary"
+      );
+      indexSwapLibrary = await IndexSwapLibrary.deploy(
+        priceOracle.address,
+        addresses.WETH_Address
+      );
+      await indexSwapLibrary.deployed();
+
+      const IndexManager = await ethers.getContractFactory("IndexManager");
+      indexManager = await IndexManager.deploy(
+        addresses.PancakeSwapRouterAddress
+      );
+      await indexManager.deployed();
+
       const IndexSwap = await ethers.getContractFactory("IndexSwap");
       indexSwap = await IndexSwap.deploy(
         "INDEXLY",
         "IDX",
-        priceOracle.address, // price oracle
         addresses.WETH_Address,
-        addresses.PancakeSwapRouterAddress,
         vault.address,
-        "500000000000000000000"
+        "500000000000000000000",
+        indexSwapLibrary.address,
+        indexManager.address
       );
-
       await indexSwap.deployed();
+
+      const Rebalancing = await ethers.getContractFactory("Rebalancing");
+      rebalancing = await Rebalancing.deploy(
+        indexSwapLibrary.address,
+        indexManager.address
+      );
 
       await busdInstance
         .connect(vault)
-        .approve(indexSwap.address, approve_amount);
+        .approve(indexManager.address, approve_amount);
       await wbnbInstance
         .connect(vault)
-        .approve(indexSwap.address, approve_amount);
+        .approve(indexManager.address, approve_amount);
       await daiInstance
         .connect(vault)
-        .approve(indexSwap.address, approve_amount);
+        .approve(indexManager.address, approve_amount);
       await ethInstance
         .connect(vault)
-        .approve(indexSwap.address, approve_amount);
+        .approve(indexManager.address, approve_amount);
       await btcInstance
         .connect(vault)
-        .approve(indexSwap.address, approve_amount);
+        .approve(indexManager.address, approve_amount);
 
       console.log("indexSwap deployed to:", indexSwap.address);
     });
@@ -124,7 +154,9 @@ describe.only("Tests for IndexSwap", () => {
           value: ethers.utils.parseEther("0.1"),
         });
         const indexSupplyAfter = await indexSwap.totalSupply();
-        const valuesAfter = await indexSwap.getTokenAndVaultBalance();
+        const valuesAfter = await indexSwapLibrary.getTokenAndVaultBalance(
+          indexSwap.address
+        );
         const balancesAfter = valuesAfter[0];
         bnbBefore = Number(balancesAfter[1]);
 
@@ -138,7 +170,9 @@ describe.only("Tests for IndexSwap", () => {
           value: ethers.utils.parseEther("0.2"),
         });
         const indexSupplyAfter = await indexSwap.totalSupply();
-        const valuesAfter = await indexSwap.getTokenAndVaultBalance();
+        const valuesAfter = await indexSwapLibrary.getTokenAndVaultBalance(
+          indexSwap.address
+        );
         const balancesAfter = valuesAfter[0];
         bnbAfter = Number(balancesAfter[1]);
 
@@ -150,32 +184,32 @@ describe.only("Tests for IndexSwap", () => {
       });
 
       it("should Rebalance", async () => {
-        await indexSwap.rebalance();
+        await rebalancing.rebalance(indexSwap.address);
       });
 
       it("should revert when Rebalance is called from an account which is not assigned as asset manager", async () => {
         await expect(
-          indexSwap.connect(nonOwner).rebalance()
+          rebalancing.connect(nonOwner).rebalance(indexSwap.address)
         ).to.be.revertedWith("Caller is not an Asset Manager");
       });
 
       it("updateWeights should revert if total Weights not equal 10,000", async () => {
-        await expect(indexSwap.updateWeights([100, 200])).to.be.revertedWith(
-          "INVALID_WEIGHTS"
-        );
+        await expect(
+          rebalancing.updateWeights(indexSwap.address, [100, 200])
+        ).to.be.revertedWith("INVALID_WEIGHTS");
       });
       it("should Update Weights and Rebalance", async () => {
         const {
           tokenXBalance: beforeTokenXBalance,
           vaultValue: beforeVaultValue,
-        } = await indexSwap.getTokenAndVaultBalance();
+        } = await indexSwapLibrary.getTokenAndVaultBalance(indexSwap.address);
 
-        await indexSwap.updateWeights([3333, 6667]);
+        await rebalancing.updateWeights(indexSwap.address, [3333, 6667]);
 
         const {
           tokenXBalance: afterTokenXBalance,
           vaultValue: afterVaultValueBN,
-        } = await indexSwap.getTokenAndVaultBalance();
+        } = await indexSwapLibrary.getTokenAndVaultBalance(indexSwap.address);
 
         // console.log({
         //   beforeToken0Bal: ethers.utils.formatEther(beforeTokenXBalance[0]),
@@ -206,7 +240,8 @@ describe.only("Tests for IndexSwap", () => {
 
       it("updateTokens should revert if total Weights not equal 10,000", async () => {
         await expect(
-          indexSwap.updateTokens(
+          rebalancing.updateTokens(
+            indexSwap.address,
             [ethInstance.address, daiInstance.address, wbnbInstance.address],
             [2000, 6000, 1000]
           )
@@ -219,9 +254,10 @@ describe.only("Tests for IndexSwap", () => {
         const {
           tokenXBalance: beforeTokenXBalance,
           vaultValue: beforeVaultValue,
-        } = await indexSwap.getTokenAndVaultBalance();
+        } = await indexSwapLibrary.getTokenAndVaultBalance(indexSwap.address);
 
-        await indexSwap.updateTokens(
+        await rebalancing.updateTokens(
+          indexSwap.address,
           [ethInstance.address, daiInstance.address, wbnbInstance.address],
           [2000, 6000, 2000]
         );
@@ -229,7 +265,7 @@ describe.only("Tests for IndexSwap", () => {
         const {
           tokenXBalance: afterTokenXBalance,
           vaultValue: afterVaultValueBN,
-        } = await indexSwap.getTokenAndVaultBalance();
+        } = await indexSwapLibrary.getTokenAndVaultBalance(indexSwap.address);
 
         // console.log({
         //   beforeBUSDBal: ethers.utils.formatEther(beforeTokenXBalance[0]),

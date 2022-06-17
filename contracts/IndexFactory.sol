@@ -1,48 +1,48 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4 || ^0.7.6 || ^0.8.0;
 
-import "./IndexSwap.sol";
+import "./core/IndexSwap.sol";
 
 contract IndexFactory {
     event IndexCreation(
         IndexSwap index,
         string _name,
         string _symbol,
-        address _oracle,
-        address _outAssest,
-        address _pancakeSwapAddress,
+        address _outAsset,
         address _vault,
-        uint256 _maxInvestmentAmount
+        uint256 _maxInvestmentAmount,
+        address _indexSwapLibrary,
+        address _portfolioManager
     );
 
     function createIndex(
         string memory _name,
         string memory _symbol,
-        address _oracle,
-        address _outAssest,
-        address _pancakeSwapAddress,
+        address _outAsset,
         address _vault,
-        uint256 _maxInvestmentAmount
+        uint256 _maxInvestmentAmount,
+        address _indexSwapLibrary,
+        address _portfolioManager
     ) public returns (IndexSwap index) {
         index = new IndexSwap(
             _name,
             _symbol,
-            _oracle,
-            _outAssest,
-            _pancakeSwapAddress,
+            _outAsset,
             _vault,
-            _maxInvestmentAmount
+            _maxInvestmentAmount,
+            _indexSwapLibrary,
+            _portfolioManager
         );
 
         emit IndexCreation(
             index,
             _name,
             _symbol,
-            _oracle,
-            _outAssest,
-            _pancakeSwapAddress,
+            _outAsset,
             _vault,
-            _maxInvestmentAmount
+            _maxInvestmentAmount,
+            _indexSwapLibrary,
+            _portfolioManager
         );
     }
 
