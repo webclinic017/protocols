@@ -18,7 +18,7 @@ contract Rebalancing is AccessControl, BMath {
 
     using SafeMath for uint256;
 
-    constructor(address _indexSwapLibrary, address _indexManager) {
+    constructor(address _indexSwapLibrary, address payable _indexManager) {
         indexSwapLibrary = IndexSwapLibrary(_indexSwapLibrary);
         indexManager = IndexManager(_indexManager);
 
@@ -236,4 +236,7 @@ contract Rebalancing is AccessControl, BMath {
 
         rebalance(_index);
     }
+
+    // important to receive ETH
+    receive() external payable {}
 }

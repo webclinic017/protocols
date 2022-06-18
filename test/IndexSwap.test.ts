@@ -107,6 +107,7 @@ describe.only("Tests for IndexSwap", () => {
         indexSwapLibrary.address,
         indexManager.address
       );
+      await rebalancing.deployed();
 
       await busdInstance
         .connect(vault)

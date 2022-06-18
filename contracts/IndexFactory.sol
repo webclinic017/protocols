@@ -22,7 +22,7 @@ contract IndexFactory {
         address _vault,
         uint256 _maxInvestmentAmount,
         address _indexSwapLibrary,
-        address _portfolioManager
+        address payable _indexManager
     ) public returns (IndexSwap index) {
         index = new IndexSwap(
             _name,
@@ -31,7 +31,7 @@ contract IndexFactory {
             _vault,
             _maxInvestmentAmount,
             _indexSwapLibrary,
-            _portfolioManager
+            _indexManager
         );
 
         emit IndexCreation(
@@ -42,7 +42,7 @@ contract IndexFactory {
             _vault,
             _maxInvestmentAmount,
             _indexSwapLibrary,
-            _portfolioManager
+            _indexManager
         );
     }
 

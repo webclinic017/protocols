@@ -61,13 +61,13 @@ contract IndexSwap is TokenBase, BMath {
         address _vault,
         uint256 _maxInvestmentAmount,
         address _indexSwapLibrary,
-        address _portfolioManager
+        address payable _indexManager
     ) TokenBase(_name, _symbol) {
         vault = _vault;
         outAsset = _outAsset; //As now we are tacking busd
         MAX_INVESTMENTAMOUNT = _maxInvestmentAmount;
         indexSwapLibrary = IndexSwapLibrary(_indexSwapLibrary);
-        indexManager = IndexManager(_portfolioManager);
+        indexManager = IndexManager(_indexManager);
     }
 
     /** @dev Emitted when public trades are enabled. */
@@ -293,7 +293,7 @@ contract IndexSwap is TokenBase, BMath {
 
     function getTotalWeight()
         public
-        view
+        pure
         onlyAllowedContracts
         returns (uint256)
     {

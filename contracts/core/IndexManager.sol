@@ -116,4 +116,7 @@ contract IndexManager {
 
         return path;
     }
+
+    // important to receive ETH
+    receive() external payable {}
 }
