@@ -6,6 +6,7 @@ import {
   PriceOracle,
   IERC20__factory,
   IndexFactory,
+  AccessController,
 } from "../typechain";
 import { chainIdToAddresses } from "../scripts/networkVariables";
 
@@ -15,6 +16,7 @@ import { chainIdToAddresses } from "../scripts/networkVariables";
 describe.skip("Tests for IndexFactory", () => {
   let accounts;
   let priceOracle: PriceOracle;
+  let accessController: AccessController;
   let indexSwap: IndexSwap;
   let indexFactory: IndexFactory;
   let txObject;
@@ -73,6 +75,14 @@ describe.skip("Tests for IndexFactory", () => {
       await priceOracle.deployed();
       await priceOracle.initialize(addresses.PancakeSwapRouterAddress);
 
+      const AccessController = await ethers.getContractFactory(
+        "AccessController"
+      );
+      accessController = await AccessController.deploy();
+      await accessController.deployed();
+      const ASSET_MANAGER_ROLE = await accessController.ASSET_MANAGER_ROLE();
+      await accessController.grantRole(ASSET_MANAGER_ROLE, owner.address);
+
       const IndexFactory = await ethers.getContractFactory("IndexFactory");
       indexFactory = await IndexFactory.deploy();
       await indexFactory.deployed();
@@ -85,7 +95,8 @@ describe.skip("Tests for IndexFactory", () => {
         priceOracle.address,
         addresses.WETH_Address,
         addresses.PancakeSwapRouterAddress,
-        addresses.Vault
+        addresses.Vault,
+        accessController.address
       );
 
       const result = index.to;
@@ -125,7 +136,8 @@ describe.skip("Tests for IndexFactory", () => {
           priceOracle.address,
           addresses.WETH_Address,
           addresses.PancakeSwapRouterAddress,
-          addresses.Vault
+          addresses.Vault,
+          accessController.address
         );
 
         console.log("index return from factory", index);

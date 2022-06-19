@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4 || ^0.7.6 || ^0.8.0;
 
+import "./AccessController.sol";
 import "./IndexFactory.sol";
 
 contract DeployIndex {
@@ -15,7 +16,8 @@ contract DeployIndex {
         address _oracle,
         address _outAssest,
         address _pancakeSwapAddress,
-        address _vault
+        address _vault,
+        AccessController _accessController
     ) public {
         index = indexFactory.createIndex(
             _name,
@@ -23,7 +25,8 @@ contract DeployIndex {
             _oracle,
             _outAssest,
             _pancakeSwapAddress,
-            _vault
+            _vault,
+            _accessController
         );
     }
 

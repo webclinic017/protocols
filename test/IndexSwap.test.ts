@@ -1,7 +1,12 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { IndexSwap, PriceOracle, IERC20__factory } from "../typechain";
+import {
+  IndexSwap,
+  PriceOracle,
+  IERC20__factory,
+  AccessController,
+} from "../typechain";
 import { chainIdToAddresses } from "../scripts/networkVariables";
 
 //use default BigNumber
@@ -10,6 +15,7 @@ import { chainIdToAddresses } from "../scripts/networkVariables";
 describe.only("Tests for IndexSwap", () => {
   let accounts;
   let priceOracle: PriceOracle;
+  let accessController: AccessController;
   let indexSwap: IndexSwap;
   let txObject;
   let owner: SignerWithAddress;
@@ -65,6 +71,14 @@ describe.only("Tests for IndexSwap", () => {
       await priceOracle.deployed();
       await priceOracle.initialize(addresses.PancakeSwapRouterAddress);
 
+      const AccessController = await ethers.getContractFactory(
+        "AccessController"
+      );
+      accessController = await AccessController.deploy();
+      await accessController.deployed();
+      const ASSET_MANAGER_ROLE = await accessController.ASSET_MANAGER_ROLE();
+      await accessController.grantRole(ASSET_MANAGER_ROLE, owner.address);
+
       const IndexSwap = await ethers.getContractFactory("IndexSwap");
       indexSwap = await IndexSwap.deploy(
         "INDEXLY",
@@ -72,7 +86,8 @@ describe.only("Tests for IndexSwap", () => {
         priceOracle.address, // price oracle
         addresses.WETH_Address,
         addresses.PancakeSwapRouterAddress,
-        vault.address
+        vault.address,
+        accessController.address
       );
 
       await indexSwap.deployed();

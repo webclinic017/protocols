@@ -13,6 +13,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./interfaces/IPriceOracle.sol";
 import "./interfaces/IWETH.sol";
+import "./AccessController.sol";
 
 contract TokenBase is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     constructor(string memory _name, string memory _symbol)
@@ -56,34 +57,27 @@ contract IndexSwap is TokenBase {
 
     address outAssest;
 
+    AccessController public accessController;
+
     constructor(
         string memory _name,
         string memory _symbol,
         address _oracle,
         address _outAssest,
         address _pancakeSwapAddress,
-        address _vault
+        address _vault,
+        AccessController _accessController
     ) TokenBase(_name, _symbol) {
         pancakeSwapRouter = IUniswapV2Router02(_pancakeSwapAddress);
         oracle = IPriceOracle(_oracle);
         vault = _vault;
         outAssest = _outAssest; //As now we are tacking busd
-        assetManagers[msg.sender] = true;
+        accessController = _accessController;
     }
-
-    mapping(address => bool) public assetManagers;
 
     modifier onlyAssetManager() {
-        require(assetManagers[msg.sender]);
+        require(accessController.isAssetManager(msg.sender));
         _;
-    }
-
-    function addAssetManager(address assetManager) public onlyAssetManager {
-        require(
-            assetManager != address(0),
-            "Ownable: new manager is the zero address"
-        );
-        assetManagers[assetManager] = true;
     }
 
     /** @dev Emitted when public trades are enabled. */
