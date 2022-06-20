@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4 || ^0.7.6 || ^0.8.0;
 
 import "./core/IndexSwap.sol";
+import "./access/AccessController.sol";
 
 contract IndexFactory {
     event IndexCreation(
@@ -11,8 +12,9 @@ contract IndexFactory {
         address _outAsset,
         address _vault,
         uint256 _maxInvestmentAmount,
-        address _indexSwapLibrary,
-        address _portfolioManager
+        IndexSwapLibrary _indexSwapLibrary,
+        IndexManager _indexManager,
+        AccessController _accessController
     );
 
     function createIndex(
@@ -21,8 +23,9 @@ contract IndexFactory {
         address _outAsset,
         address _vault,
         uint256 _maxInvestmentAmount,
-        address _indexSwapLibrary,
-        address payable _indexManager
+        IndexSwapLibrary _indexSwapLibrary,
+        IndexManager _indexManager,
+        AccessController _accessController
     ) public returns (IndexSwap index) {
         index = new IndexSwap(
             _name,
@@ -31,7 +34,8 @@ contract IndexFactory {
             _vault,
             _maxInvestmentAmount,
             _indexSwapLibrary,
-            _indexManager
+            _indexManager,
+            _accessController
         );
 
         emit IndexCreation(
@@ -42,16 +46,16 @@ contract IndexFactory {
             _vault,
             _maxInvestmentAmount,
             _indexSwapLibrary,
-            _indexManager
+            _indexManager,
+            _accessController
         );
     }
 
     function initializeTokens(
-        address _indexAddress,
+        IndexSwap _index,
         address[] calldata _tokens,
         uint96[] calldata _denorms
     ) public {
-        IndexSwap index = IndexSwap(payable(_indexAddress));
-        index.initialize(_tokens, _denorms);
+        _index.initialize(_tokens, _denorms);
     }
 }

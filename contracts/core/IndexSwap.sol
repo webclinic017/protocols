@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4 || ^0.7.6 || ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -12,6 +13,7 @@ import "../interfaces/IBalancerLib.sol";
 import "../interfaces/IWETH.sol";
 import "./IndexSwapLibrary.sol";
 import "./IndexManager.sol";
+import "../access/AccessController.sol";
 
 contract TokenBase is ERC20, ERC20Burnable, Ownable {
     constructor(string memory _name, string memory _symbol)
@@ -53,6 +55,7 @@ contract IndexSwap is TokenBase, BMath {
     address internal outAsset;
     IndexSwapLibrary public indexSwapLibrary;
     IndexManager public indexManager;
+    AccessController public accessController;
 
     constructor(
         string memory _name,
@@ -60,14 +63,16 @@ contract IndexSwap is TokenBase, BMath {
         address _outAsset,
         address _vault,
         uint256 _maxInvestmentAmount,
-        address _indexSwapLibrary,
-        address payable _indexManager
+        IndexSwapLibrary _indexSwapLibrary,
+        IndexManager _indexManager,
+        AccessController _accessController
     ) TokenBase(_name, _symbol) {
         vault = _vault;
         outAsset = _outAsset; //As now we are tacking busd
         MAX_INVESTMENTAMOUNT = _maxInvestmentAmount;
         indexSwapLibrary = IndexSwapLibrary(_indexSwapLibrary);
         indexManager = IndexManager(_indexManager);
+        accessController = _accessController;
     }
 
     /** @dev Emitted when public trades are enabled. */

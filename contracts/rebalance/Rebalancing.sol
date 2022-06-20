@@ -1,36 +1,45 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4 || ^0.7.6 || ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "../core/IndexSwapLibrary.sol";
 import "../core/IndexManager.sol";
 import "../core/IndexSwap.sol";
 
 import "../interfaces/IBalancerLib.sol";
+import "../access/AccessController.sol";
 
-contract Rebalancing is AccessControl, BMath {
+contract Rebalancing is BMath {
     bytes32 public constant ASSET_MANAGER_ROLE =
         keccak256("ASSET_MANAGER_ROLE");
 
     IndexSwapLibrary public indexSwapLibrary;
     IndexManager public indexManager;
 
+    AccessController public accessController;
+    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
+
     using SafeMath for uint256;
 
-    constructor(address _indexSwapLibrary, address payable _indexManager) {
-        indexSwapLibrary = IndexSwapLibrary(_indexSwapLibrary);
-        indexManager = IndexManager(_indexManager);
+    constructor(
+        IndexSwapLibrary _indexSwapLibrary,
+        IndexManager _indexManager,
+        AccessController _accessController
+    ) {
+        indexSwapLibrary = _indexSwapLibrary;
+        indexManager = _indexManager;
+        accessController = _accessController;
 
         // OpenZeppelin Access Control
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setRoleAdmin(ASSET_MANAGER_ROLE, DEFAULT_ADMIN_ROLE);
-        _setupRole(ASSET_MANAGER_ROLE, msg.sender);
+        accessController.setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        accessController.setRoleAdmin(ASSET_MANAGER_ROLE, DEFAULT_ADMIN_ROLE);
+        accessController.setupRole(ASSET_MANAGER_ROLE, msg.sender);
     }
 
     modifier onlyAssetManager() {
         require(
-            hasRole(ASSET_MANAGER_ROLE, msg.sender),
+            accessController.isAssetManager(msg.sender),
             "Caller is not an Asset Manager"
         );
         _;

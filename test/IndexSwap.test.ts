@@ -8,6 +8,7 @@ import {
   IndexSwapLibrary,
   IndexManager,
   Rebalancing,
+  AccessController,
 } from "../typechain";
 import { chainIdToAddresses } from "../scripts/networkVariables";
 
@@ -21,6 +22,7 @@ describe.only("Tests for IndexSwap", () => {
   let indexSwapLibrary: IndexSwapLibrary;
   let indexManager: IndexManager;
   let rebalancing: Rebalancing;
+  let accessController: AccessController;
   let txObject;
   let owner: SignerWithAddress;
   let nonOwner: SignerWithAddress;
@@ -90,6 +92,12 @@ describe.only("Tests for IndexSwap", () => {
       );
       await indexManager.deployed();
 
+      const AccessController = await ethers.getContractFactory(
+        "AccessController"
+      );
+      accessController = await AccessController.deploy();
+      await accessController.deployed();
+
       const IndexSwap = await ethers.getContractFactory("IndexSwap");
       indexSwap = await IndexSwap.deploy(
         "INDEXLY",
@@ -98,14 +106,16 @@ describe.only("Tests for IndexSwap", () => {
         vault.address,
         "500000000000000000000",
         indexSwapLibrary.address,
-        indexManager.address
+        indexManager.address,
+        accessController.address
       );
       await indexSwap.deployed();
 
       const Rebalancing = await ethers.getContractFactory("Rebalancing");
       rebalancing = await Rebalancing.deploy(
         indexSwapLibrary.address,
-        indexManager.address
+        indexManager.address,
+        accessController.address
       );
       await rebalancing.deployed();
 
