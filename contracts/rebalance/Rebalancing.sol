@@ -78,9 +78,9 @@ contract Rebalancing is ReentrancyGuard {
                         _index,
                         t,
                         swapAmount,
-                        address(this)
+                        address(indexManager)
                     );
-                    indexManager._swapTokenToETH(t, swapAmount, msg.sender);
+                    indexManager._swapTokenToETH(t, swapAmount, address(this));
                 }
             } else if (_newWeights[i] > _oldWeights[i]) {
                 uint256 diff = _newWeights[i].sub(_oldWeights[i]);
