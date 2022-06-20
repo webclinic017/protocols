@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4 || ^0.7.6 || ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -13,7 +14,7 @@ import "./IndexSwapLibrary.sol";
 import "./IndexManager.sol";
 import "../access/AccessController.sol";
 
-contract TokenBase is ERC20, ERC20Burnable, Ownable {
+contract TokenBase is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
     constructor(string memory _name, string memory _symbol)
         ERC20(_name, _symbol)
     {}
@@ -125,7 +126,7 @@ contract IndexSwap is TokenBase {
      * @dev (tokenBalanceInBNB, vaultBalance) has to be calculated before swapping for the _mintShareAmount function because during the 
             swap the amount will change but the index token balance is still the same (before minting)
      */
-    function investInFund() public payable {
+    function investInFund() public payable nonReentrant {
         uint256 tokenAmount = msg.value;
         require(
             tokenAmount <= MAX_INVESTMENTAMOUNT,
@@ -173,7 +174,7 @@ contract IndexSwap is TokenBase {
                and burns the amount of index token being withdrawn
      * @param tokenAmount The index token amount the user wants to withdraw from the fund
      */
-    function withdrawFund(uint256 tokenAmount) public {
+    function withdrawFund(uint256 tokenAmount) public nonReentrant {
         require(
             tokenAmount <= balanceOf(msg.sender),
             "caller is not holding given token amount"
