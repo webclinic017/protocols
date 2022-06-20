@@ -7,10 +7,9 @@ import "../core/IndexSwapLibrary.sol";
 import "../core/IndexManager.sol";
 import "../core/IndexSwap.sol";
 
-import "../interfaces/IBalancerLib.sol";
 import "../access/AccessController.sol";
 
-contract Rebalancing is BMath {
+contract Rebalancing {
     bytes32 public constant ASSET_MANAGER_ROLE =
         keccak256("ASSET_MANAGER_ROLE");
 
@@ -203,7 +202,7 @@ contract Rebalancing is BMath {
         uint256 totalWeight = 0;
 
         for (uint256 i = 0; i < tokens.length; i++) {
-            totalWeight = badd(totalWeight, denorms[i]);
+            totalWeight = totalWeight.add(denorms[i]);
         }
         require(totalWeight == _index.getTotalWeight(), "INVALID_WEIGHTS");
 

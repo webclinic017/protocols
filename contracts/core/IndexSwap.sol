@@ -8,8 +8,6 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-import "../interfaces/IBalancerLib.sol";
-
 import "../interfaces/IWETH.sol";
 import "./IndexSwapLibrary.sol";
 import "./IndexManager.sol";
@@ -21,7 +19,7 @@ contract TokenBase is ERC20, ERC20Burnable, Ownable {
     {}
 }
 
-contract IndexSwap is TokenBase, BMath {
+contract IndexSwap is TokenBase {
     // IERC20 public token;
     using SafeMath for uint256;
 
@@ -98,7 +96,7 @@ contract IndexSwap is TokenBase, BMath {
             });
             _tokens.push(tokens[i]);
 
-            totalWeight = badd(totalWeight, denorms[i]);
+            totalWeight = totalWeight.add(denorms[i]);
         }
         require(totalWeight == TOTAL_WEIGHT, "INVALID_WEIGHTS");
 
@@ -256,7 +254,7 @@ contract IndexSwap is TokenBase, BMath {
                 denorm: denorms[i],
                 index: uint8(i)
             });
-            totalWeight = badd(totalWeight, denorms[i]);
+            totalWeight = totalWeight.add(denorms[i]);
         }
 
         require(totalWeight == TOTAL_WEIGHT, "INVALID_WEIGHTS");
