@@ -66,15 +66,6 @@ describe("Price Oracle", () => {
     });
   });
 
-  it("Get price of BTC for 100 BNB", async () => {
-    const btc = btcInstance.address;
-    const wbnb = wbnbInstance.address;
-    const path = [btcInstance.address, wbnbInstance.address];
-    priceOracle.getPrice("100", path).then((resp) => {
-      expect(resp).to.be.greaterThanOrEqual(0);
-    });
-  });
-
   it("Get pair address of BTC and WBNB", async () => {
     const btc = btcInstance.address;
     const wbnb = wbnbInstance.address;
@@ -83,16 +74,6 @@ describe("Price Oracle", () => {
       expect(pairAdress).not.to.be.equal(
         "0x0000000000000000000000000000000000000000"
       );
-    });
-  });
-
-  // ETH
-  it("Get price of ETH for 100 BNB", async () => {
-    const eth = ethInstance.address;
-    const wbnb = wbnbInstance.address;
-    const path = [eth, wbnb];
-    priceOracle.getPrice("100", path).then((resp) => {
-      expect(resp).to.be.greaterThanOrEqual(0);
     });
   });
 
@@ -110,16 +91,6 @@ describe("Price Oracle", () => {
     const eth = ethInstance.address;
     const wbnb = wbnbInstance.address;
     priceOracle.getTokenPrice(wbnb, eth).then((resp) => {
-      expect(resp).to.be.greaterThanOrEqual(0);
-    });
-  });
-
-  // USDT
-  it("Get price of USDT for 100 BNB", async () => {
-    const usd = busdInstance.address;
-    const wbnb = wbnbInstance.address;
-    const path = [usd, wbnb];
-    priceOracle.getPrice("100", path).then((resp) => {
       expect(resp).to.be.greaterThanOrEqual(0);
     });
   });
@@ -150,15 +121,6 @@ describe("Price Oracle", () => {
     });
   });
 
-  it("Get price of LINK for 100 BNB", async () => {
-    const link = linkInstance.address;
-    const wbnb = wbnbInstance.address;
-    const path = [link, wbnb];
-    priceOracle.getPrice("100", path).then((resp) => {
-      expect(resp).to.be.greaterThanOrEqual(0);
-    });
-  });
-
   it("Get pair address of LINK and WBNB", async () => {
     const link = linkInstance.address;
     const wbnb = wbnbInstance.address;
@@ -167,12 +129,6 @@ describe("Price Oracle", () => {
       expect(pairAdress).not.to.be.equal(
         "0x0000000000000000000000000000000000000000"
       );
-    });
-  });
-
-  it("Update index price", async () => {
-    priceOracle.updateIndexPrice().then((resp) => {
-      expect(resp).to.be.greaterThanOrEqual(0);
     });
   });
 });
