@@ -22,7 +22,8 @@ contract IndexFactory {
         address _vault,
         AccessController _accessController
     ) public returns (IndexSwap index) {
-        index = new IndexSwap(
+        index = new IndexSwap();
+        index.initialize(
             _name,
             _symbol,
             _oracle,
@@ -47,6 +48,6 @@ contract IndexFactory {
         uint96[] calldata _denorms
     ) public {
         IndexSwap index = IndexSwap(payable(_indexAddress));
-        index.initialize(_tokens, _denorms);
+        index.init(_tokens, _denorms);
     }
 }

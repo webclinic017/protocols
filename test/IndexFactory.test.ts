@@ -158,7 +158,7 @@ describe.skip("Tests for IndexFactory", () => {
       it("Initialize IndexFund Tokens", async () => {
         await indexSwap
           .connect(owner)
-          .initialize([busdInstance.address, ethInstance.address], [1, 1]);
+          .init([busdInstance.address, ethInstance.address], [1, 1]);
       });
 
       it("Invest 0.1BNB into Top10 fund", async () => {

@@ -1,6 +1,6 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { ethers, upgrades } from "hardhat";
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   IndexSwap,
   PriceOracle,
@@ -65,30 +65,31 @@ describe.only("Tests for IndexSwap", () => {
     before(async () => {
       accounts = await ethers.getSigners();
       [owner, investor1, nonOwner, vault, addr1, addr2, ...addrs] = accounts;
-      const PriceOracle = await ethers.getContractFactory("PriceOracle");
-      priceOracle = await PriceOracle.deploy();
 
-      await priceOracle.deployed();
-      await priceOracle.initialize(addresses.PancakeSwapRouterAddress);
+      const PriceOracle = await ethers.getContractFactory("PriceOracle");
+      priceOracle = (await upgrades.deployProxy(PriceOracle, [
+        addresses.PancakeSwapRouterAddress,
+      ])) as PriceOracle;
 
       const AccessController = await ethers.getContractFactory(
         "AccessController"
       );
-      accessController = await AccessController.deploy();
-      await accessController.deployed();
+      accessController = (await upgrades.deployProxy(
+        AccessController
+      )) as AccessController;
       const ASSET_MANAGER_ROLE = await accessController.ASSET_MANAGER_ROLE();
       await accessController.grantRole(ASSET_MANAGER_ROLE, owner.address);
 
       const IndexSwap = await ethers.getContractFactory("IndexSwap");
-      indexSwap = await IndexSwap.deploy(
+      indexSwap = (await upgrades.deployProxy(IndexSwap, [
         "INDEXLY",
         "IDX",
         priceOracle.address, // price oracle
         addresses.WETH_Address,
         addresses.PancakeSwapRouterAddress,
         vault.address,
-        accessController.address
-      );
+        accessController.address,
+      ])) as IndexSwap;
 
       await indexSwap.deployed();
 
@@ -118,14 +119,14 @@ describe.only("Tests for IndexSwap", () => {
       });
       it("initialize should revert if total Weights not equal 10,000", async () => {
         await expect(
-          indexSwap.initialize(
+          indexSwap.init(
             [busdInstance.address, ethInstance.address],
             [5000, 1000]
           )
         ).to.be.revertedWith("INVALID_WEIGHTS");
       });
       it("Initialize IndexFund Tokens", async () => {
-        await indexSwap.initialize(
+        await indexSwap.init(
           [busdInstance.address, ethInstance.address],
           [5000, 5000]
         );

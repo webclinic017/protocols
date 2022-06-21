@@ -6,7 +6,6 @@ import "@nomiclabs/hardhat-ethers";
 import "@typechain/hardhat";
 import "@openzeppelin/hardhat-upgrades";
 import "solidity-coverage";
-import "solidity-coverage";
 import "./tasks/accounts";
 import "./tasks/balance";
 import "./tasks/block-number";
@@ -20,7 +19,7 @@ if (!mnemonic) {
 
 const infuraApiKey = process.env.INFURA_API_KEY;
 const privateKey = process.env.PRIVATE_KEY;
-const forkChainId: any  = process.env.FORK_CHAINID;
+const forkChainId: any = process.env.FORK_CHAINID;
 
 if (!infuraApiKey) {
   throw new Error("Please set your INFURA_API_KEY in a .env file");
@@ -48,7 +47,9 @@ const config: HardhatUserConfig = {
       forking: {
         // eslint-disable-next-line
         enabled: true,
-        url: forkChainId ? chainIdToAddresses[forkChainId].RpcUrl:`https://data-seed-prebsc-1-s1.binance.org:8545`,
+        url: forkChainId
+          ? chainIdToAddresses[forkChainId].RpcUrl
+          : `https://data-seed-prebsc-1-s1.binance.org:8545`,
       },
       // chainId: chainIds.hardhat,
       // allowUnlimitedContractSize: true
@@ -104,7 +105,10 @@ const config: HardhatUserConfig = {
       // chainId: chainIds["MaticTestnet"],
       chainId: 80001,
       allowUnlimitedContractSize: true,
-      url: "https://speedy-nodes-nyc.moralis.io/"+ infuraApiKey +"/polygon/mumbai",
+      url:
+        "https://speedy-nodes-nyc.moralis.io/" +
+        infuraApiKey +
+        "/polygon/mumbai",
     },
     MaticMainnet: {
       accounts: {

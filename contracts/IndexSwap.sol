@@ -1,24 +1,36 @@
 pragma solidity ^0.8.4 || ^0.7.6 || ^0.8.0;
 
-import "./interfaces/IUniswapV2Router02.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@uniswap/lib/contracts/libraries/TransferHelper.sol";
+
+import "./interfaces/IUniswapV2Router02.sol";
 import "./interfaces/IPriceOracle.sol";
 import "./interfaces/IWETH.sol";
 import "./AccessController.sol";
 
-contract TokenBase is ERC20, ERC20Burnable, Ownable, ReentrancyGuard {
-    constructor(string memory _name, string memory _symbol)
-        ERC20(_name, _symbol)
-    {}
+contract TokenBase is
+    Initializable,
+    ERC20BurnableUpgradeable,
+    OwnableUpgradeable,
+    ReentrancyGuardUpgradeable
+{
+    function __TokenBase_init(string memory _name, string memory _symbol)
+        internal
+        initializer
+    {
+        __ERC20_init(_name, _symbol);
+        __ERC20Burnable_init();
+        __Ownable_init();
+        __ReentrancyGuard_init();
+    }
 }
 
 contract IndexSwap is TokenBase {
@@ -59,7 +71,7 @@ contract IndexSwap is TokenBase {
 
     AccessController public accessController;
 
-    constructor(
+    function initialize(
         string memory _name,
         string memory _symbol,
         address _oracle,
@@ -67,11 +79,13 @@ contract IndexSwap is TokenBase {
         address _pancakeSwapAddress,
         address _vault,
         AccessController _accessController
-    ) TokenBase(_name, _symbol) {
+    ) public initializer {
+        __TokenBase_init(_name, _symbol);
+
         pancakeSwapRouter = IUniswapV2Router02(_pancakeSwapAddress);
         oracle = IPriceOracle(_oracle);
         vault = _vault;
-        outAssest = _outAssest; //As now we are tacking busd
+        outAssest = _outAssest; //As now we are tracking busd
         accessController = _accessController;
     }
 
@@ -89,7 +103,7 @@ contract IndexSwap is TokenBase {
      * @param tokens Underlying tokens to initialize the pool with
      * @param denorms Initial denormalized weights for the tokens
      */
-    function initialize(address[] calldata tokens, uint96[] calldata denorms)
+    function init(address[] calldata tokens, uint96[] calldata denorms)
         external
         onlyOwner
     {

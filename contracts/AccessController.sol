@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "./IndexSwap.sol";
 
-contract AccessController is AccessControl {
+contract AccessController is AccessControlUpgradeable {
     bytes32 public constant ASSET_MANAGER_ROLE =
         keccak256("ASSET_MANAGER_ROLE");
 
-    constructor() {
+    function initialize() public initializer {
+        __AccessControl_init();
+
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
