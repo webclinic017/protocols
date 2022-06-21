@@ -1,57 +1,61 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4 || ^0.7.6 || ^0.8.0;
 
-import "./IndexSwap.sol";
+import "./core/IndexSwap.sol";
+import "./access/AccessController.sol";
 
 contract IndexFactory {
     event IndexCreation(
         IndexSwap index,
         string _name,
         string _symbol,
-        address _oracle,
-        address _outAssest,
-        address _pancakeSwapAddress,
+        address _outAsset,
         address _vault,
-        uint256 _maxInvestmentAmount
+        uint256 _maxInvestmentAmount,
+        IndexSwapLibrary _indexSwapLibrary,
+        IndexManager _indexManager,
+        AccessController _accessController
     );
 
     function createIndex(
         string memory _name,
         string memory _symbol,
-        address _oracle,
-        address _outAssest,
-        address _pancakeSwapAddress,
+        address _outAsset,
         address _vault,
-        uint256 _maxInvestmentAmount
+        uint256 _maxInvestmentAmount,
+        IndexSwapLibrary _indexSwapLibrary,
+        IndexManager _indexManager,
+        AccessController _accessController
     ) public returns (IndexSwap index) {
         index = new IndexSwap(
             _name,
             _symbol,
-            _oracle,
-            _outAssest,
-            _pancakeSwapAddress,
+            _outAsset,
             _vault,
-            _maxInvestmentAmount
+            _maxInvestmentAmount,
+            _indexSwapLibrary,
+            _indexManager,
+            _accessController
         );
 
         emit IndexCreation(
             index,
             _name,
             _symbol,
-            _oracle,
-            _outAssest,
-            _pancakeSwapAddress,
+            _outAsset,
             _vault,
-            _maxInvestmentAmount
+            _maxInvestmentAmount,
+            _indexSwapLibrary,
+            _indexManager,
+            _accessController
         );
     }
 
     function initializeTokens(
-        address _indexAddress,
+        IndexSwap _index,
         address[] calldata _tokens,
         uint96[] calldata _denorms
     ) public {
-        IndexSwap index = IndexSwap(payable(_indexAddress));
-        index.initialize(_tokens, _denorms);
+        _index.initialize(_tokens, _denorms);
     }
 }
