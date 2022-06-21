@@ -36,7 +36,7 @@ describe.only("Tests for IndexSwap", () => {
   let token;
   const forkChainId: any = process.env.FORK_CHAINID;
   const provider = ethers.provider;
-  const chainId: any = forkChainId ? forkChainId : 97;
+  const chainId: any = forkChainId ? forkChainId : 56;
   const addresses = chainIdToAddresses[chainId];
   var bnbBefore = 0;
   var bnbAfter = 0;
@@ -73,9 +73,9 @@ describe.only("Tests for IndexSwap", () => {
       [owner, investor1, nonOwner, vault, addr1, addr2, ...addrs] = accounts;
       const PriceOracle = await ethers.getContractFactory("PriceOracle");
       priceOracle = await PriceOracle.deploy();
-
       await priceOracle.deployed();
-      await priceOracle.initialize(addresses.PancakeSwapRouterAddress);
+
+      await priceOracle.initialize(addresses.PancakeSwapV2RouterAddress);
 
       const IndexSwapLibrary = await ethers.getContractFactory(
         "IndexSwapLibrary"
@@ -95,7 +95,8 @@ describe.only("Tests for IndexSwap", () => {
       const IndexManager = await ethers.getContractFactory("IndexManager");
       indexManager = await IndexManager.deploy(
         accessController.address,
-        addresses.PancakeSwapRouterAddress
+        "0x7250C7A64C5BCbe4815E905C10F822C2DA7358Ef",
+        addresses.PancakeSwapV2RouterAddress
       );
       await indexManager.deployed();
 
@@ -104,8 +105,8 @@ describe.only("Tests for IndexSwap", () => {
         "INDEXLY",
         "IDX",
         addresses.WETH_Address,
-        vault.address,
-        "500000000000000000000",
+        addresses.Vault, // vault
+        "500000000000000000000", // max investment amount
         indexSwapLibrary.address,
         indexManager.address,
         accessController.address
@@ -120,21 +121,9 @@ describe.only("Tests for IndexSwap", () => {
       );
       await rebalancing.deployed();
 
-      await busdInstance
-        .connect(vault)
-        .approve(indexManager.address, approve_amount);
-      await wbnbInstance
-        .connect(vault)
-        .approve(indexManager.address, approve_amount);
-      await daiInstance
-        .connect(vault)
-        .approve(indexManager.address, approve_amount);
-      await ethInstance
-        .connect(vault)
-        .approve(indexManager.address, approve_amount);
-      await btcInstance
-        .connect(vault)
-        .approve(indexManager.address, approve_amount);
+      const MyModule = ethers.getContractFactory("MyModule");
+      let myModule = (await MyModule).attach(addresses.Module);
+      myModule.addOwner(indexManager.address);
 
       console.log("indexSwap deployed to:", indexSwap.address);
     });
@@ -147,14 +136,14 @@ describe.only("Tests for IndexSwap", () => {
       it("initialize should revert if total Weights not equal 10,000", async () => {
         await expect(
           indexSwap.initialize(
-            [busdInstance.address, ethInstance.address],
+            [btcInstance.address, ethInstance.address],
             [5000, 1000]
           )
         ).to.be.revertedWith("INVALID_WEIGHTS");
       });
       it("Initialize IndexFund Tokens", async () => {
         await indexSwap.initialize(
-          [busdInstance.address, ethInstance.address],
+          [btcInstance.address, ethInstance.address],
           [5000, 5000]
         );
       });

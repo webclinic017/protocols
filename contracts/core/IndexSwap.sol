@@ -27,6 +27,7 @@ contract IndexSwap is TokenBase {
     uint256 public indexPrice;
 
     address public vault;
+    MyModule gnosisSafe;
 
     /**
      * @dev Token record data structure
@@ -56,15 +57,6 @@ contract IndexSwap is TokenBase {
     IndexManager public indexManager;
     AccessController public accessController;
 
-    bytes32 public constant DEFAULT_ADMIN_ROLE =
-        keccak256("DEFAULT_ADMIN_ROLE");
-
-    bytes32 public constant ASSET_MANAGER_ROLE =
-        keccak256("ASSET_MANAGER_ROLE");
-
-    bytes32 public constant INDEX_MANAGER_ROLE =
-        keccak256("INDEX_MANAGER_ROLE");
-
     constructor(
         string memory _name,
         string memory _symbol,
@@ -83,8 +75,14 @@ contract IndexSwap is TokenBase {
         accessController = _accessController;
 
         // OpenZeppelin Access Control
-        accessController.setRoleAdmin(INDEX_MANAGER_ROLE, DEFAULT_ADMIN_ROLE);
-        accessController.setupRole(INDEX_MANAGER_ROLE, address(this));
+        accessController.setRoleAdmin(
+            keccak256("INDEX_MANAGER_ROLE"),
+            keccak256("DEFAULT_ADMIN_ROLE")
+        );
+        accessController.setupRole(
+            keccak256("INDEX_MANAGER_ROLE"),
+            address(this)
+        );
     }
 
     /** @dev Emitted when public trades are enabled. */
@@ -209,14 +207,9 @@ contract IndexSwap is TokenBase {
             );
 
             if (t == indexManager.getETH()) {
-                indexManager._pullFromVault(this, t, amount, msg.sender);
+                indexManager._pullFromVault(t, amount, msg.sender);
             } else {
-                indexManager._pullFromVault(
-                    this,
-                    t,
-                    amount,
-                    address(indexManager)
-                );
+                indexManager._pullFromVault(t, amount, address(indexManager));
                 indexManager._swapTokenToETH(t, amount, msg.sender);
             }
         }
