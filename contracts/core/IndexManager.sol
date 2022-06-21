@@ -7,12 +7,16 @@ import "../interfaces/IWETH.sol";
 
 import "../core/IndexSwapLibrary.sol";
 import "./IndexSwap.sol";
+import "../access/AccessController.sol";
 
 contract IndexManager {
     IUniswapV2Router02 public pancakeSwapRouter;
+    AccessController public accessController;
 
-    constructor(address _pancakeSwapAddress) {
+    constructor(AccessController _accessController, address _pancakeSwapAddress)
+    {
         pancakeSwapRouter = IUniswapV2Router02(_pancakeSwapAddress);
+        accessController = _accessController;
     }
 
     /**
@@ -20,6 +24,14 @@ contract IndexManager {
      */
     function getETH() public view returns (address) {
         return pancakeSwapRouter.WETH();
+    }
+
+    modifier onlyIndexManager() {
+        require(
+            accessController.isIndexManager(msg.sender),
+            "Caller is not an Index Manager"
+        );
+        _;
     }
 
     /**
@@ -30,7 +42,7 @@ contract IndexManager {
         address t,
         uint256 amount,
         address to
-    ) public {
+    ) public onlyIndexManager {
         TransferHelper.safeTransferFrom(t, _index.getVault(), to, amount);
     }
 
@@ -45,7 +57,7 @@ contract IndexManager {
         address t,
         uint256 swapAmount,
         address to
-    ) public payable returns (uint256 swapResult) {
+    ) public payable onlyIndexManager returns (uint256 swapResult) {
         if (t == getETH()) {
             IWETH(t).deposit{value: swapAmount}();
             swapResult = swapAmount;
@@ -75,7 +87,7 @@ contract IndexManager {
         address t,
         uint256 swapAmount,
         address to
-    ) public returns (uint256 swapResult) {
+    ) public onlyIndexManager returns (uint256 swapResult) {
         TransferHelper.safeApprove(t, address(pancakeSwapRouter), swapAmount);
         swapResult = pancakeSwapRouter.swapExactTokensForETH(
             swapAmount,

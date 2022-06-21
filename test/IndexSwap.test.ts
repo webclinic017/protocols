@@ -86,17 +86,18 @@ describe.only("Tests for IndexSwap", () => {
       );
       await indexSwapLibrary.deployed();
 
-      const IndexManager = await ethers.getContractFactory("IndexManager");
-      indexManager = await IndexManager.deploy(
-        addresses.PancakeSwapRouterAddress
-      );
-      await indexManager.deployed();
-
       const AccessController = await ethers.getContractFactory(
         "AccessController"
       );
       accessController = await AccessController.deploy();
       await accessController.deployed();
+
+      const IndexManager = await ethers.getContractFactory("IndexManager");
+      indexManager = await IndexManager.deploy(
+        accessController.address,
+        addresses.PancakeSwapRouterAddress
+      );
+      await indexManager.deployed();
 
       const IndexSwap = await ethers.getContractFactory("IndexSwap");
       indexSwap = await IndexSwap.deploy(

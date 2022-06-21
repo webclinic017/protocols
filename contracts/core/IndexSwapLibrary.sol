@@ -22,7 +22,8 @@ contract IndexSwapLibrary {
     }
 
     /**
-     * @notice The function calculates the balance of each token in the vault and converts them to BNB and the sum of those values which represents the total vault value in BNB
+     * @notice The function calculates the balance of each token in the vault and converts them to BNB and 
+               the sum of those values which represents the total vault value in BNB
      * @return tokenXBalance A list of the value of each token in the portfolio in BNB
      * @return vaultValue The total vault value in BNB
      */

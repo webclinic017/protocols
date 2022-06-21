@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../core/IndexSwapLibrary.sol";
 import "../core/IndexManager.sol";
 import "../core/IndexSwap.sol";
-
 import "../access/AccessController.sol";
 
 contract Rebalancing is ReentrancyGuard {
@@ -18,7 +17,11 @@ contract Rebalancing is ReentrancyGuard {
     IndexManager public indexManager;
 
     AccessController public accessController;
-    bytes32 public constant DEFAULT_ADMIN_ROLE = 0x00;
+    bytes32 public constant DEFAULT_ADMIN_ROLE =
+        keccak256("DEFAULT_ADMIN_ROLE");
+
+    bytes32 public constant INDEX_MANAGER_ROLE =
+        keccak256("INDEX_MANAGER_ROLE");
 
     using SafeMath for uint256;
 
@@ -35,6 +38,9 @@ contract Rebalancing is ReentrancyGuard {
         accessController.setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         accessController.setRoleAdmin(ASSET_MANAGER_ROLE, DEFAULT_ADMIN_ROLE);
         accessController.setupRole(ASSET_MANAGER_ROLE, msg.sender);
+
+        accessController.setRoleAdmin(INDEX_MANAGER_ROLE, DEFAULT_ADMIN_ROLE);
+        accessController.setupRole(INDEX_MANAGER_ROLE, address(this));
     }
 
     modifier onlyAssetManager() {

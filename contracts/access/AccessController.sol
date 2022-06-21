@@ -7,6 +7,9 @@ contract AccessController is AccessControl {
     bytes32 public constant ASSET_MANAGER_ROLE =
         keccak256("ASSET_MANAGER_ROLE");
 
+    bytes32 public constant INDEX_MANAGER_ROLE =
+        keccak256("INDEX_MANAGER_ROLE");
+
     constructor() {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -18,6 +21,10 @@ contract AccessController is AccessControl {
 
     function isAssetManager(address account) external view returns (bool) {
         return hasRole(ASSET_MANAGER_ROLE, account);
+    }
+
+    function isIndexManager(address account) external view returns (bool) {
+        return hasRole(INDEX_MANAGER_ROLE, account); // TODO
     }
 
     function setupRole(bytes32 role, address account) public onlyAdmin(role) {

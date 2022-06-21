@@ -56,6 +56,15 @@ contract IndexSwap is TokenBase {
     IndexManager public indexManager;
     AccessController public accessController;
 
+    bytes32 public constant DEFAULT_ADMIN_ROLE =
+        keccak256("DEFAULT_ADMIN_ROLE");
+
+    bytes32 public constant ASSET_MANAGER_ROLE =
+        keccak256("ASSET_MANAGER_ROLE");
+
+    bytes32 public constant INDEX_MANAGER_ROLE =
+        keccak256("INDEX_MANAGER_ROLE");
+
     constructor(
         string memory _name,
         string memory _symbol,
@@ -72,6 +81,10 @@ contract IndexSwap is TokenBase {
         indexSwapLibrary = IndexSwapLibrary(_indexSwapLibrary);
         indexManager = IndexManager(_indexManager);
         accessController = _accessController;
+
+        // OpenZeppelin Access Control
+        accessController.setRoleAdmin(INDEX_MANAGER_ROLE, DEFAULT_ADMIN_ROLE);
+        accessController.setupRole(INDEX_MANAGER_ROLE, address(this));
     }
 
     /** @dev Emitted when public trades are enabled. */
@@ -106,7 +119,8 @@ contract IndexSwap is TokenBase {
 
     /**
      * @notice The function calculates the amount of index tokens the user can buy/mint with the invested amount.
-     * @param _amount The invested amount after swapping ETH into portfolio tokens converted to BNB to avoid slippage errors
+     * @param _amount The invested amount after swapping ETH into portfolio tokens converted to BNB to avoid 
+                      slippage errors
      * @param sumPrice The total value in the vault converted to BNB
      * @return Returns the amount of index tokens to be minted.
      */
@@ -122,9 +136,11 @@ contract IndexSwap is TokenBase {
 
     /**
      * @notice The function swaps BNB into the portfolio tokens after a user makes an investment
-     * @dev The output of the swap is converted into BNB to get the actual amount after slippage to calculate the index token amount to mint
-     * @dev (tokenBalanceInBNB, vaultBalance) has to be calculated before swapping for the _mintShareAmount function because during the 
-            swap the amount will change but the index token balance is still the same (before minting)
+     * @dev The output of the swap is converted into BNB to get the actual amount after slippage to calculate 
+            the index token amount to mint
+     * @dev (tokenBalanceInBNB, vaultBalance) has to be calculated before swapping for the _mintShareAmount function 
+            because during the swap the amount will change but the index token balance is still the same 
+            (before minting)
      */
     function investInFund() public payable nonReentrant {
         uint256 tokenAmount = msg.value;
@@ -170,8 +186,8 @@ contract IndexSwap is TokenBase {
     }
 
     /**
-     * @notice The function swaps the amount of portfolio tokens represented by the amount of index token back to BNB and returns it to the user
-               and burns the amount of index token being withdrawn
+     * @notice The function swaps the amount of portfolio tokens represented by the amount of index token back to 
+               BNB and returns it to the user and burns the amount of index token being withdrawn
      * @param tokenAmount The index token amount the user wants to withdraw from the fund
      */
     function withdrawFund(uint256 tokenAmount) public nonReentrant {
@@ -264,7 +280,8 @@ contract IndexSwap is TokenBase {
     modifier onlyAllowedContracts() {
         /*require(
             address(indexSwapLibrary) == msg.sender ||
-                address(indexManager) == msg.sender ||
+                address(indexManager) == msg.sender || 
+                add rebalancing contract --> TODO add everything to access controller
         ); add rebalancing contract*/
         _;
     }
