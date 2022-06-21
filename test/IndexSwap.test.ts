@@ -72,7 +72,8 @@ describe.only("Tests for IndexSwap", () => {
         priceOracle.address, // price oracle
         addresses.WETH_Address,
         addresses.PancakeSwapRouterAddress,
-        vault.address
+        vault.address,
+        "500000000000000000000"
       );
 
       await indexSwap.deployed();
@@ -150,6 +151,12 @@ describe.only("Tests for IndexSwap", () => {
 
       it("should Rebalance", async () => {
         await indexSwap.rebalance();
+      });
+
+      it("should revert when Rebalance is called from an account which is not assigned as asset manager", async () => {
+        await expect(
+          indexSwap.connect(nonOwner).rebalance()
+        ).to.be.revertedWith("Caller is not an Asset Manager");
       });
 
       it("updateWeights should revert if total Weights not equal 10,000", async () => {
