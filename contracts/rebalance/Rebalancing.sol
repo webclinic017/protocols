@@ -17,11 +17,6 @@ contract Rebalancing is ReentrancyGuard {
     IndexManager public indexManager;
 
     AccessController public accessController;
-    bytes32 public constant DEFAULT_ADMIN_ROLE =
-        keccak256("DEFAULT_ADMIN_ROLE");
-
-    bytes32 public constant INDEX_MANAGER_ROLE =
-        keccak256("INDEX_MANAGER_ROLE");
 
     using SafeMath for uint256;
 
@@ -35,12 +30,26 @@ contract Rebalancing is ReentrancyGuard {
         accessController = _accessController;
 
         // OpenZeppelin Access Control
-        accessController.setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        accessController.setRoleAdmin(ASSET_MANAGER_ROLE, DEFAULT_ADMIN_ROLE);
-        accessController.setupRole(ASSET_MANAGER_ROLE, msg.sender);
+        accessController.setupRole(keccak256("DEFAULT_ADMIN_ROLE"), msg.sender);
+        accessController.setRoleAdmin(
+            keccak256("ASSET_MANAGER_ROLE"),
+            keccak256("DEFAULT_ADMIN_ROLE")
+        );
+        accessController.setupRole(keccak256("ASSET_MANAGER_ROLE"), msg.sender);
 
-        accessController.setRoleAdmin(INDEX_MANAGER_ROLE, DEFAULT_ADMIN_ROLE);
-        accessController.setupRole(INDEX_MANAGER_ROLE, address(this));
+        accessController.setRoleAdmin(
+            keccak256("INDEX_MANAGER_ROLE"),
+            keccak256("DEFAULT_ADMIN_ROLE")
+        );
+        accessController.setupRole(
+            keccak256("INDEX_MANAGER_ROLE"),
+            address(this)
+        );
+
+        accessController.setupRole(
+            keccak256("REBALANCER_CONTRACT"),
+            address(this)
+        );
     }
 
     modifier onlyAssetManager() {
@@ -66,7 +75,7 @@ contract Rebalancing is ReentrancyGuard {
         for (uint256 i = 0; i < _index.getTokens().length; i++) {
             if (_newWeights[i] < _oldWeights[i]) {
                 address t = _index.getTokens()[i];
-                uint256 tokenBalance = IERC20(t).balanceOf(_index.getVault());
+                uint256 tokenBalance = IERC20(t).balanceOf(_index.vault());
                 uint256 weightDiff = _oldWeights[i].sub(_newWeights[i]);
                 uint256 swapAmount = tokenBalance.mul(weightDiff).div(
                     _oldWeights[i]
@@ -120,7 +129,7 @@ contract Rebalancing is ReentrancyGuard {
                 indexManager._swapETHToToken{value: swapAmount}(
                     t,
                     swapAmount,
-                    _index.getVault()
+                    _index.vault()
                 );
             }
         }
@@ -144,9 +153,9 @@ contract Rebalancing is ReentrancyGuard {
             .getTokenAndVaultBalance(_index);
 
         for (uint256 i = 0; i < _index.getTokens().length; i++) {
-            oldWeights[i] = tokenBalanceInBNB[i]
-                .mul(_index.getTotalWeight())
-                .div(vaultBalance);
+            oldWeights[i] = tokenBalanceInBNB[i].mul(_index.TOTAL_WEIGHT()).div(
+                vaultBalance
+            );
             newWeights[i] = uint256(
                 _index.getRecord(_index.getTokens()[i]).denorm
             );
@@ -211,7 +220,7 @@ contract Rebalancing is ReentrancyGuard {
         for (uint256 i = 0; i < tokens.length; i++) {
             totalWeight = totalWeight.add(denorms[i]);
         }
-        require(totalWeight == _index.getTotalWeight(), "INVALID_WEIGHTS");
+        require(totalWeight == _index.TOTAL_WEIGHT(), "INVALID_WEIGHTS");
 
         uint256[] memory newDenorms = evaluateNewDenorms(
             _index,
@@ -225,9 +234,7 @@ contract Rebalancing is ReentrancyGuard {
                 address t = _index.getTokens()[i];
                 // token removed
                 if (newDenorms[i] == 0) {
-                    uint256 tokenBalance = IERC20(t).balanceOf(
-                        _index.getVault()
-                    );
+                    uint256 tokenBalance = IERC20(t).balanceOf(_index.vault());
 
                     indexManager._pullFromVault(
                         _index,

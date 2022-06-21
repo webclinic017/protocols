@@ -43,7 +43,7 @@ contract IndexManager {
         uint256 amount,
         address to
     ) public onlyIndexManager {
-        TransferHelper.safeTransferFrom(t, _index.getVault(), to, amount);
+        TransferHelper.safeTransferFrom(t, _index.vault(), to, amount);
     }
 
     /**

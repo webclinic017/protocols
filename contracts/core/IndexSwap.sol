@@ -26,7 +26,7 @@ contract IndexSwap is TokenBase {
 
     uint256 public indexPrice;
 
-    address private vault;
+    address public vault;
 
     /**
      * @dev Token record data structure
@@ -46,12 +46,12 @@ contract IndexSwap is TokenBase {
     mapping(address => Record) internal _records;
 
     // Total denormalized weight of the pool.
-    uint256 internal constant TOTAL_WEIGHT = 10_000;
+    uint256 public constant TOTAL_WEIGHT = 10_000;
 
     // Total denormalized weight of the pool.
     uint256 internal MAX_INVESTMENTAMOUNT;
 
-    address internal outAsset;
+    address public outAsset;
     IndexSwapLibrary public indexSwapLibrary;
     IndexManager public indexManager;
     AccessController public accessController;
@@ -254,6 +254,14 @@ contract IndexSwap is TokenBase {
         }
     }
 
+    modifier onlyRebalancerContract() {
+        require(
+            accessController.isRebalancerContract(msg.sender),
+            "Caller is not an Rebalancer Contract"
+        );
+        _;
+    }
+
     /**
      * @notice The function updates the record struct including the denorm information
      * @dev The token list is passed so the function can be called with current or updated token list
@@ -262,7 +270,7 @@ contract IndexSwap is TokenBase {
      */
     function updateRecords(address[] memory tokens, uint96[] memory denorms)
         public
-        onlyAllowedContracts
+        onlyRebalancerContract
     {
         uint256 totalWeight = 0;
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -277,58 +285,22 @@ contract IndexSwap is TokenBase {
         require(totalWeight == TOTAL_WEIGHT, "INVALID_WEIGHTS");
     }
 
-    modifier onlyAllowedContracts() {
-        /*require(
-            address(indexSwapLibrary) == msg.sender ||
-                address(indexManager) == msg.sender || 
-                add rebalancing contract --> TODO add everything to access controller
-        ); add rebalancing contract*/
-        _;
-    }
-
-    function getVault() public view onlyAllowedContracts returns (address) {
-        return vault;
-    }
-
-    function getTokens()
-        public
-        view
-        onlyAllowedContracts
-        returns (address[] memory)
-    {
+    function getTokens() public view returns (address[] memory) {
         return _tokens;
     }
 
-    function getOutAsset() public view onlyAllowedContracts returns (address) {
-        return outAsset;
-    }
-
-    function getRecord(address _token)
-        public
-        view
-        onlyAllowedContracts
-        returns (Record memory)
-    {
+    function getRecord(address _token) public view returns (Record memory) {
         return _records[_token];
-    }
-
-    function getTotalWeight()
-        public
-        pure
-        onlyAllowedContracts
-        returns (uint256)
-    {
-        return TOTAL_WEIGHT;
     }
 
     function updateTokenList(address[] memory tokens)
         public
-        onlyAllowedContracts
+        onlyRebalancerContract
     {
         _tokens = tokens;
     }
 
-    function deleteRecord(address t) public onlyAllowedContracts {
+    function deleteRecord(address t) public onlyRebalancerContract {
         delete _records[t];
     }
 

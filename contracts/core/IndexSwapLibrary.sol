@@ -40,7 +40,7 @@ contract IndexSwapLibrary {
         if (_index.totalSupply() > 0) {
             for (uint256 i = 0; i < _index.getTokens().length; i++) {
                 uint256 tokenBalance = IERC20(_index.getTokens()[i]).balanceOf(
-                    _index.getVault()
+                    _index.vault()
                 );
                 uint256 tokenBalanceBNB;
 
@@ -102,7 +102,7 @@ contract IndexSwapLibrary {
         }
 
         uint256 decimal = oracle.getDecimal(t);
-        uint256 tokenPrice = oracle.getTokenPrice(t, _index.getOutAsset());
+        uint256 tokenPrice = oracle.getTokenPrice(t, _index.outAsset());
         amountInBNB = tokenPrice.mul(amount).div(10**decimal);
     }
 }

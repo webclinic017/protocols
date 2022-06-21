@@ -10,6 +10,9 @@ contract AccessController is AccessControl {
     bytes32 public constant INDEX_MANAGER_ROLE =
         keccak256("INDEX_MANAGER_ROLE");
 
+    bytes32 public constant REBALANCER_CONTRACT =
+        keccak256("REBALANCER_CONTRACT");
+
     constructor() {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -24,7 +27,15 @@ contract AccessController is AccessControl {
     }
 
     function isIndexManager(address account) external view returns (bool) {
-        return hasRole(INDEX_MANAGER_ROLE, account); // TODO
+        return hasRole(INDEX_MANAGER_ROLE, account);
+    }
+
+    function isRebalancerContract(address account)
+        external
+        view
+        returns (bool)
+    {
+        return hasRole(REBALANCER_CONTRACT, account);
     }
 
     function setupRole(bytes32 role, address account) public onlyAdmin(role) {
