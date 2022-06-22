@@ -1,6 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import {
   IndexSwap,
   PriceOracle,
@@ -72,35 +72,40 @@ describe.only("Tests for IndexSwap", () => {
       accounts = await ethers.getSigners();
       [owner, investor1, nonOwner, vault, addr1, addr2, ...addrs] = accounts;
       const PriceOracle = await ethers.getContractFactory("PriceOracle");
-      priceOracle = await PriceOracle.deploy();
 
-      await priceOracle.deployed();
-      await priceOracle.initialize(addresses.PancakeSwapRouterAddress);
+      const priceProxy = await upgrades.deployProxy(PriceOracle, [
+        addresses.PancakeSwapRouterAddress,
+      ]);
+      await priceProxy.deployed();
+      priceOracle = PriceOracle.attach(priceProxy.address);
 
       const IndexSwapLibrary = await ethers.getContractFactory(
         "IndexSwapLibrary"
       );
-      indexSwapLibrary = await IndexSwapLibrary.deploy();
-      indexSwapLibrary.initialize(priceOracle.address, addresses.WETH_Address);
-      await indexSwapLibrary.deployed();
+      const libraryProxy = await upgrades.deployProxy(IndexSwapLibrary, [
+        priceOracle.address,
+        addresses.WETH_Address,
+      ]);
+      await libraryProxy.deployed();
+      indexSwapLibrary = IndexSwapLibrary.attach(libraryProxy.address);
 
       const AccessController = await ethers.getContractFactory(
         "AccessController"
       );
-      accessController = await AccessController.deploy();
-      await accessController.deployed();
+      const accessProxy = await upgrades.deployProxy(AccessController);
+      await accessProxy.deployed();
+      accessController = AccessController.attach(accessProxy.address);
 
       const IndexManager = await ethers.getContractFactory("IndexManager");
-      indexManager = await IndexManager.deploy();
-      indexManager.initialize(
+      const managerProxy = await upgrades.deployProxy(IndexManager, [
         accessController.address,
-        addresses.PancakeSwapRouterAddress
-      );
-      await indexManager.deployed();
+        addresses.PancakeSwapRouterAddress,
+      ]);
+      await managerProxy.deployed();
+      indexManager = IndexManager.attach(managerProxy.address);
 
       const IndexSwap = await ethers.getContractFactory("IndexSwap");
-      indexSwap = await IndexSwap.deploy();
-      indexSwap.initialize(
+      const indexProxy = await upgrades.deployProxy(IndexSwap, [
         "INDEXLY",
         "IDX",
         addresses.WETH_Address,
@@ -108,18 +113,19 @@ describe.only("Tests for IndexSwap", () => {
         "500000000000000000000",
         indexSwapLibrary.address,
         indexManager.address,
-        accessController.address
-      );
-      await indexSwap.deployed();
+        accessController.address,
+      ]);
+      await indexProxy.deployed();
+      indexSwap = IndexSwap.attach(indexProxy.address);
 
       const Rebalancing = await ethers.getContractFactory("Rebalancing");
-      rebalancing = await Rebalancing.deploy();
-      rebalancing.initialize(
+      const rebalanceProxy = await upgrades.deployProxy(Rebalancing, [
         indexSwapLibrary.address,
         indexManager.address,
-        accessController.address
-      );
-      await rebalancing.deployed();
+        accessController.address,
+      ]);
+      await rebalanceProxy.deployed();
+      rebalancing = Rebalancing.attach(rebalanceProxy.address);
 
       await busdInstance
         .connect(vault)
