@@ -230,16 +230,24 @@ contract Rebalancing is ReentrancyGuard {
                 if (newDenorms[i] == 0) {
                     uint256 tokenBalance = IERC20(t).balanceOf(_index.vault());
 
-                    indexManager._pullFromVault(
-                        t,
-                        tokenBalance,
-                        address(indexManager)
-                    );
-                    indexManager._swapTokenToETH(
-                        t,
-                        tokenBalance,
-                        address(this)
-                    );
+                    if (t == indexManager.getETH()) {
+                        indexManager._pullFromVault(
+                            t,
+                            tokenBalance,
+                            address(this)
+                        );
+                    } else {
+                        indexManager._pullFromVault(
+                            t,
+                            tokenBalance,
+                            address(indexManager)
+                        );
+                        indexManager._swapTokenToETH(
+                            t,
+                            tokenBalance,
+                            address(this)
+                        );
+                    }
 
                     _index.deleteRecord(t);
                 }

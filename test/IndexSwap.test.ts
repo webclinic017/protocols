@@ -136,15 +136,27 @@ describe.only("Tests for IndexSwap", () => {
       it("initialize should revert if total Weights not equal 10,000", async () => {
         await expect(
           indexSwap.initialize(
-            [btcInstance.address, ethInstance.address],
-            [5000, 1000]
+            [
+              "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c", // BTC
+              "0x2170Ed0880ac9A755fd29B2688956BD959F933F8", // ETH
+              "0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE", // XRP
+              "0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47", // ADA
+              "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", // WBNB
+            ],
+            [2000, 2000, 2000, 2000, 1000]
           )
         ).to.be.revertedWith("INVALID_WEIGHTS");
       });
       it("Initialize IndexFund Tokens", async () => {
         await indexSwap.initialize(
-          [btcInstance.address, ethInstance.address],
-          [5000, 5000]
+          [
+            "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c", // BTC
+            "0x2170Ed0880ac9A755fd29B2688956BD959F933F8", // ETH
+            "0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE", // XRP
+            "0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47", // ADA
+            "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c", // WBNB
+          ],
+          [2000, 2000, 2000, 2000, 2000]
         );
       });
 
@@ -196,7 +208,10 @@ describe.only("Tests for IndexSwap", () => {
 
       it("updateWeights should revert if total Weights not equal 10,000", async () => {
         await expect(
-          rebalancing.updateWeights(indexSwap.address, [100, 200])
+          rebalancing.updateWeights(
+            indexSwap.address,
+            [100, 200, 100, 100, 100]
+          )
         ).to.be.revertedWith("INVALID_WEIGHTS");
       });
       it("should Update Weights and Rebalance", async () => {
@@ -205,7 +220,10 @@ describe.only("Tests for IndexSwap", () => {
           vaultValue: beforeVaultValue,
         } = await indexSwapLibrary.getTokenAndVaultBalance(indexSwap.address);
 
-        await rebalancing.updateWeights(indexSwap.address, [3333, 6667]);
+        await rebalancing.updateWeights(
+          indexSwap.address,
+          [5000, 2000, 1000, 1000, 1000]
+        );
 
         const {
           tokenXBalance: afterTokenXBalance,
@@ -232,10 +250,10 @@ describe.only("Tests for IndexSwap", () => {
         );
 
         expect(Math.ceil((afterToken0Bal * 10) / afterVaultValue)).to.be.gte(
-          (3333 * 10) / 10000
+          (5000 * 10) / 10000
         );
         expect(Math.ceil((afterToken1Bal * 10) / afterVaultValue)).to.be.gte(
-          (6667 * 10) / 10000
+          (2000 * 10) / 10000
         );
       });
 
@@ -244,7 +262,7 @@ describe.only("Tests for IndexSwap", () => {
           rebalancing.updateTokens(
             indexSwap.address,
             [ethInstance.address, daiInstance.address, wbnbInstance.address],
-            [2000, 6000, 1000]
+            [2000, 3000, 1000, 2000, 1000]
           )
         ).to.be.revertedWith("INVALID_WEIGHTS");
       });
@@ -259,8 +277,14 @@ describe.only("Tests for IndexSwap", () => {
 
         await rebalancing.updateTokens(
           indexSwap.address,
-          [ethInstance.address, daiInstance.address, wbnbInstance.address],
-          [2000, 6000, 2000]
+          [
+            ethInstance.address,
+            daiInstance.address,
+            wbnbInstance.address,
+            btcInstance.address,
+            "0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47", // ADA
+          ],
+          [2000, 3000, 1000, 2000, 2000]
         );
 
         const {
@@ -294,10 +318,10 @@ describe.only("Tests for IndexSwap", () => {
           (2000 * 10) / 10000
         );
         expect(Math.ceil((afterDAIBal * 10) / afterVaultValue)).to.be.gte(
-          (6000 * 10) / 10000
+          (3000 * 10) / 10000
         );
         expect(Math.ceil((afterWBNBBal * 10) / afterVaultValue)).to.be.gte(
-          (2000 * 10) / 10000
+          (1000 * 10) / 10000
         );
       });
 

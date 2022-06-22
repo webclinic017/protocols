@@ -98,9 +98,8 @@ contract IndexSwap is TokenBase {
         onlyOwner
     {
         require(_tokens.length == 0, "INITIALIZED");
-        uint256 len = tokens.length;
         uint256 totalWeight = 0;
-        for (uint256 i = 0; i < len; i++) {
+        for (uint256 i = 0; i < tokens.length; i++) {
             _records[tokens[i]] = Record({
                 lastDenormUpdate: uint40(block.timestamp),
                 denorm: denorms[i],
