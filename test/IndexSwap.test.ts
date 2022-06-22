@@ -80,10 +80,8 @@ describe.only("Tests for IndexSwap", () => {
       const IndexSwapLibrary = await ethers.getContractFactory(
         "IndexSwapLibrary"
       );
-      indexSwapLibrary = await IndexSwapLibrary.deploy(
-        priceOracle.address,
-        addresses.WETH_Address
-      );
+      indexSwapLibrary = await IndexSwapLibrary.deploy();
+      indexSwapLibrary.initialize(priceOracle.address, addresses.WETH_Address);
       await indexSwapLibrary.deployed();
 
       const AccessController = await ethers.getContractFactory(
@@ -93,14 +91,16 @@ describe.only("Tests for IndexSwap", () => {
       await accessController.deployed();
 
       const IndexManager = await ethers.getContractFactory("IndexManager");
-      indexManager = await IndexManager.deploy(
+      indexManager = await IndexManager.deploy();
+      indexManager.initialize(
         accessController.address,
         addresses.PancakeSwapRouterAddress
       );
       await indexManager.deployed();
 
       const IndexSwap = await ethers.getContractFactory("IndexSwap");
-      indexSwap = await IndexSwap.deploy(
+      indexSwap = await IndexSwap.deploy();
+      indexSwap.initialize(
         "INDEXLY",
         "IDX",
         addresses.WETH_Address,
@@ -113,7 +113,8 @@ describe.only("Tests for IndexSwap", () => {
       await indexSwap.deployed();
 
       const Rebalancing = await ethers.getContractFactory("Rebalancing");
-      rebalancing = await Rebalancing.deploy(
+      rebalancing = await Rebalancing.deploy();
+      rebalancing.initialize(
         indexSwapLibrary.address,
         indexManager.address,
         accessController.address
@@ -146,14 +147,14 @@ describe.only("Tests for IndexSwap", () => {
       });
       it("initialize should revert if total Weights not equal 10,000", async () => {
         await expect(
-          indexSwap.initialize(
+          indexSwap.init(
             [busdInstance.address, ethInstance.address],
             [5000, 1000]
           )
         ).to.be.revertedWith("INVALID_WEIGHTS");
       });
       it("Initialize IndexFund Tokens", async () => {
-        await indexSwap.initialize(
+        await indexSwap.init(
           [busdInstance.address, ethInstance.address],
           [5000, 5000]
         );

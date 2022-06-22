@@ -27,7 +27,8 @@ contract IndexFactory {
         IndexManager _indexManager,
         AccessController _accessController
     ) public returns (IndexSwap index) {
-        index = new IndexSwap(
+        index = new IndexSwap();
+        index.initialize(
             _name,
             _symbol,
             _outAsset,
@@ -56,6 +57,6 @@ contract IndexFactory {
         address[] calldata _tokens,
         uint96[] calldata _denorms
     ) public {
-        _index.initialize(_tokens, _denorms);
+        _index.init(_tokens, _denorms);
     }
 }

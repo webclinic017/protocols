@@ -88,10 +88,8 @@ describe.skip("Tests for IndexFactory", () => {
       const IndexSwapLibrary = await ethers.getContractFactory(
         "IndexSwapLibrary"
       );
-      indexSwapLibrary = await IndexSwapLibrary.deploy(
-        priceOracle.address,
-        addresses.WETH_Address
-      );
+      indexSwapLibrary = await IndexSwapLibrary.deploy();
+      indexSwapLibrary.initialize(priceOracle.address, addresses.WETH_Address);
       await indexSwapLibrary.deployed();
 
       const AccessController = await ethers.getContractFactory(
@@ -101,7 +99,8 @@ describe.skip("Tests for IndexFactory", () => {
       await accessController.deployed();
 
       const IndexManager = await ethers.getContractFactory("IndexManager");
-      indexManager = await IndexManager.deploy(
+      indexManager = await IndexManager.deploy();
+      indexManager.initialize(
         accessController.address,
         addresses.PancakeSwapRouterAddress
       );
@@ -129,7 +128,8 @@ describe.skip("Tests for IndexFactory", () => {
       indexSwap = await IndexSwap.attach(indexAddress);
 
       const Rebalancing = await ethers.getContractFactory("Rebalancing");
-      rebalancing = await Rebalancing.deploy(
+      rebalancing = await Rebalancing.deploy();
+      rebalancing.initialize(
         indexSwapLibrary.address,
         indexManager.address,
         accessController.address
@@ -190,7 +190,7 @@ describe.skip("Tests for IndexFactory", () => {
       it("Initialize IndexFund Tokens", async () => {
         await indexSwap
           .connect(owner)
-          .initialize([busdInstance.address, ethInstance.address], [1, 1]);
+          .init([busdInstance.address, ethInstance.address], [1, 1]);
       });
 
       it("Invest 0.1BNB into Top10 fund", async () => {
